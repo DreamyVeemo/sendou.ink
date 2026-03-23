@@ -197,7 +197,9 @@ function Document({
 				<meta name="mobile-web-app-capable" content="yes" />
 				<meta name="theme-color" content="#010115" />
 				{import.meta.env.VITE_FUSE_ENABLED &&
-				!data?.user?.roles.includes("MINOR_SUPPORT") ? (
+				// check for data so supporters don't see ads on error page
+				data &&
+				!data.user?.roles.includes("MINOR_SUPPORT") ? (
 					<script
 						async
 						src="https://cdn.fuseplatform.net/publift/tags/2/4242/fuse.js"
