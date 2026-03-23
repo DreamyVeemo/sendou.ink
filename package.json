@@ -17,7 +17,7 @@
 		"check-homemade-badges": "node --experimental-strip-types scripts/check-homemade-badges.ts",
 		"check-articles": "tsx scripts/check-articles.ts",
 		"refresh-prod-db": "node --experimental-strip-types scripts/refresh-prod-db.ts && npm run migrate:prod",
-		"biome:check": "npx @biomejs/biome --error-on-warnings check .",
+		"biome:check": "npx @biomejs/biome check --error-on-warnings .",
 		"biome:fix": "npx @biomejs/biome check --error-on-warnings --write .",
 		"biome:fix:unsafe": "npx @biomejs/biome check --error-on-warnings --write --unsafe .",
 		"typecheck": "react-router typegen && tsc --noEmit",
