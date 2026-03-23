@@ -136,6 +136,10 @@ function ChatProviderInner({
 	const [unreadCounts, setUnreadCounts] = React.useState<
 		Record<string, number>
 	>({});
+	const [chatLabels, setChatLabels] = React.useState<Record<number, string>>(
+		{},
+	);
+	const clearChatLabels = React.useCallback(() => setChatLabels({}), []);
 
 	const ws = React.useRef<WebSocket>(undefined);
 
@@ -508,6 +512,9 @@ function ChatProviderInner({
 			setChatOpen,
 			activeRoom,
 			setActiveRoom,
+			chatLabels,
+			setChatLabels,
+			clearChatLabels,
 		}),
 		[
 			isLoading,
@@ -525,6 +532,8 @@ function ChatProviderInner({
 			chatOpen,
 			activeRoom,
 			setChatOpen,
+			chatLabels,
+			clearChatLabels,
 		],
 	);
 

@@ -12,6 +12,7 @@ import { Placeholder } from "~/components/Placeholder";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { useUser } from "~/features/auth/core/user";
+import { useChatContext } from "~/features/chat/useChatContext";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -110,6 +111,8 @@ export function TournamentLayout() {
 		[data],
 	);
 	const [bracketExpanded, setBracketExpanded] = React.useState(true);
+
+	useTournamentChatLabels(tournament);
 
 	// this is nice to debug with tournament in browser console
 	if (process.env.NODE_ENV === "development") {
@@ -239,4 +242,42 @@ export function useTournamentFriendCodes() {
 
 export function useTournamentPreparedMaps() {
 	return useOutletContext<TournamentContext>().preparedMaps;
+}
+
+function useTournamentChatLabels(tournament: Tournament) {
+	const chatContext = useChatContext();
+	const setChatLabels = chatContext?.setChatLabels;
+	const clearChatLabels = chatContext?.clearChatLabels;
+
+	React.useEffect(() => {
+		if (!setChatLabels || !clearChatLabels) return;
+
+		const labels: Record<number, string> = {};
+
+		labels[tournament.ctx.author.id] = "TO";
+
+		for (const staff of tournament.ctx.staff) {
+			if (staff.role === "ORGANIZER") {
+				labels[staff.id] = "TO";
+			} else if (staff.role === "STREAMER") {
+				labels[staff.id] = "Stream";
+			}
+		}
+
+		if (tournament.ctx.organization) {
+			for (const member of tournament.ctx.organization.members) {
+				if (["ADMIN", "ORGANIZER"].includes(member.role)) {
+					labels[member.userId] = "TO";
+				} else if (member.role === "STREAMER") {
+					labels[member.userId] = "Stream";
+				}
+			}
+		}
+
+		setChatLabels(labels);
+
+		return () => {
+			clearChatLabels();
+		};
+	}, [setChatLabels, clearChatLabels, tournament]);
 }
