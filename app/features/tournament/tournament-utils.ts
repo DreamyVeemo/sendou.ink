@@ -1,3 +1,4 @@
+import { sub } from "date-fns";
 import * as R from "remeda";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -188,6 +189,19 @@ export function resolveLeagueRoundStartDate(
 	});
 
 	return date;
+}
+
+const EARLIEST_TIMEZONE_OFFSET_HOURS = 14;
+
+export function isLeagueRoundLocked(
+	tournament: TournamentClass,
+	roundId: number,
+) {
+	const date = resolveLeagueRoundStartDate(tournament, roundId);
+
+	if (!date) return false;
+
+	return sub(date, { hours: EARLIEST_TIMEZONE_OFFSET_HOURS }) > new Date();
 }
 
 export function defaultBracketSettings(

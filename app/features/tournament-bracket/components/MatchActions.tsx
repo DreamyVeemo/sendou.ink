@@ -6,7 +6,7 @@ import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-utils";
+import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
 import invariant from "~/utils/invariant";
 import * as PickBan from "../core/PickBan";
 import type { TournamentDataTeam } from "../core/Tournament.server";
@@ -230,11 +230,7 @@ function ReportScoreButtons({
 	const [endConfirmation, setEndConfirmation] = React.useState(false);
 	const [pointConfirmation, setPointConfirmation] = React.useState(false);
 
-	const leagueRoundStartDate = resolveLeagueRoundStartDate(
-		tournament,
-		data.match.roundId,
-	);
-	if (leagueRoundStartDate && leagueRoundStartDate > new Date()) {
+	if (isLeagueRoundLocked(tournament, data.match.roundId)) {
 		return (
 			<p className={styles.duringMatchActionsAmountWarningParagraph}>
 				League round has not started yet

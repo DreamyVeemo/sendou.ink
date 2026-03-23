@@ -19,7 +19,10 @@ import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-utils";
+import {
+	isLeagueRoundLocked,
+	resolveLeagueRoundStartDate,
+} from "~/features/tournament/tournament-utils";
 import { useIsMounted } from "~/hooks/useIsMounted";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import type { StageId } from "~/modules/in-game-lists/types";
@@ -346,13 +349,10 @@ function FancyStageBanner({
 		return null;
 	})();
 
-	const waitingForLeagueRoundToStart = (() => {
-		const date = resolveLeagueRoundStartDate(tournament, data.match.roundId);
-
-		if (!date) return false;
-
-		return date > new Date();
-	})();
+	const waitingForLeagueRoundToStart = isLeagueRoundLocked(
+		tournament,
+		data.match.roundId,
+	);
 
 	return (
 		<>
