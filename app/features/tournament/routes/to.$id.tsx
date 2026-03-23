@@ -156,14 +156,18 @@ export function TournamentLayout() {
 						Divisions
 					</SubNavLink>
 				) : null}
-				<SubNavLink
-					to="teams"
-					end={false}
-					prefetch="render"
-					data-testid="teams-tab"
-				>
-					{t("tournament:tabs.teams", { count: tournament.ctx.teams.length })}
-				</SubNavLink>
+				{!(tournament.isLeagueSignup && data.hasChildTournaments) ? (
+					<SubNavLink
+						to="teams"
+						end={false}
+						prefetch="render"
+						data-testid="teams-tab"
+					>
+						{t("tournament:tabs.teams", {
+							count: tournament.ctx.teams.length,
+						})}
+					</SubNavLink>
+				) : null}
 				{!tournament.isInvitational &&
 				!tournament.everyBracketOver &&
 				!(tournament.isLeagueSignup && !tournament.registrationOpen) &&
@@ -206,6 +210,7 @@ export function TournamentLayout() {
 							tournament,
 							bracketExpanded,
 							setBracketExpanded,
+							hasChildTournaments: data.hasChildTournaments,
 							friendCodes: data.friendCodes,
 							preparedMaps: data.preparedMaps,
 						} satisfies TournamentContext
@@ -220,6 +225,7 @@ type TournamentContext = {
 	tournament: Tournament;
 	bracketExpanded: boolean;
 	setBracketExpanded: (expanded: boolean) => void;
+	hasChildTournaments: boolean;
 	friendCode?: string;
 	friendCodes?: TournamentLoaderData["friendCodes"];
 	preparedMaps: TournamentLoaderData["preparedMaps"];
@@ -234,6 +240,10 @@ export function useBracketExpanded() {
 		useOutletContext<TournamentContext>();
 
 	return { bracketExpanded, setBracketExpanded };
+}
+
+export function useHasChildTournaments() {
+	return useOutletContext<TournamentContext>().hasChildTournaments;
 }
 
 export function useTournamentFriendCodes() {

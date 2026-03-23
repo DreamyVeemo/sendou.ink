@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import { LEAGUES } from "~/features/tournament/tournament-constants";
 import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { parseParams } from "~/utils/remix.server";
@@ -10,6 +11,7 @@ export type TournamentLoaderData = {
 	tournament: Awaited<ReturnType<typeof tournamentDataCached>>;
 	streamingParticipants: number[];
 	streamsCount: number;
+	hasChildTournaments: boolean;
 	friendCodes:
 		| Awaited<ReturnType<typeof TournamentRepository.friendCodesByTournamentId>>
 		| undefined;
@@ -53,9 +55,17 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const showFriendCodes = tournamentStartedInTheLastMonth && isTournamentAdmin;
 
+	const isLeagueSignup = Object.values(LEAGUES)
+		.flat()
+		.some((entry) => entry.tournamentId === tournamentId);
+	const hasChildTournaments = isLeagueSignup
+		? await TournamentRepository.hasChildTournaments(tournamentId)
+		: false;
+
 	// skip expensive rr7 data serialization (hot path loader)
 	return JSON.stringify({
 		tournament,
+		hasChildTournaments,
 		friendCodes: showFriendCodes
 			? await TournamentRepository.friendCodesByTournamentId(tournamentId)
 			: undefined,

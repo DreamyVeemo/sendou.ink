@@ -316,6 +316,17 @@ export async function findById(id: number) {
 	};
 }
 
+export async function hasChildTournaments(parentTournamentId: number) {
+	const row = await db
+		.selectFrom("Tournament")
+		.select("Tournament.id")
+		.where("Tournament.parentTournamentId", "=", parentTournamentId)
+		.limit(1)
+		.executeTakeFirst();
+
+	return Boolean(row);
+}
+
 export async function findChildTournaments(parentTournamentId: number) {
 	const rows = await db
 		.selectFrom("Tournament")
