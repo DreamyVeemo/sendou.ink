@@ -25,6 +25,7 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
+import { logger } from "~/utils/logger";
 import type { SerializeFrom } from "~/utils/remix";
 import { assertUnreachable } from "~/utils/types";
 import {
@@ -530,31 +531,36 @@ function TimezoneWidget({ timezone }: { timezone: string }) {
 		return () => clearInterval(interval);
 	}, []);
 
-	const formatter = new Intl.DateTimeFormat("en-US", {
-		timeZone: timezone,
-		hour: "numeric",
-		minute: "2-digit",
-		second: "2-digit",
-		hour12: true,
-	});
+	try {
+		const formatter = new Intl.DateTimeFormat("en-US", {
+			timeZone: timezone,
+			hour: "numeric",
+			minute: "2-digit",
+			second: "2-digit",
+			hour12: true,
+		});
 
-	const dateFormatter = new Intl.DateTimeFormat("en-US", {
-		timeZone: timezone,
-		weekday: "short",
-		day: "numeric",
-		month: "short",
-	});
+		const dateFormatter = new Intl.DateTimeFormat("en-US", {
+			timeZone: timezone,
+			weekday: "short",
+			day: "numeric",
+			month: "short",
+		});
 
-	return (
-		<div className="stack sm items-center">
-			<div className={styles.widgetValueMain} suppressHydrationWarning>
-				{formatter.format(currentTime)}
+		return (
+			<div className="stack sm items-center">
+				<div className={styles.widgetValueMain} suppressHydrationWarning>
+					{formatter.format(currentTime)}
+				</div>
+				<div className={styles.widgetValueFooter} suppressHydrationWarning>
+					{dateFormatter.format(currentTime)}
+				</div>
 			</div>
-			<div className={styles.widgetValueFooter} suppressHydrationWarning>
-				{dateFormatter.format(currentTime)}
-			</div>
-		</div>
-	);
+		);
+	} catch {
+		logger.warn(`Failed to parse timezone: ${timezone}`);
+		return null;
+	}
 }
 
 function FavoriteStageWidget({ stageId }: { stageId: StageId }) {
