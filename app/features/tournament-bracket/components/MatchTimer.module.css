@@ -55,7 +55,7 @@
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
 	white-space: nowrap;
-	text-shadow: 0 0 3px black;
+	text-shadow: 0 0 3px var(--color-text-inverse);
 }
 
 .gameMarkerHidden .gameMarkerText {
