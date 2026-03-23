@@ -59,6 +59,10 @@
 		color: var(--color-info);
 	}
 
+	.text-accent-high {
+		color: var(--color-accent-high);
+	}
+
 	.text-warning {
 		color: var(--color-warning);
 	}

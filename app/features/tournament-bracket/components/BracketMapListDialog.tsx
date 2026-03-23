@@ -1075,7 +1075,7 @@ function MysteryRow({
 		<li className={styles.mapListRow}>
 			<div
 				className={clsx("stack horizontal items-center xs text-lighter", {
-					"text-info": isCounterpicks,
+					"text-accent-high": isCounterpicks,
 				})}
 			>
 				<span className="text-lg">{number}.</span>

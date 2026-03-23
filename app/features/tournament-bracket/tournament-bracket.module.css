@@ -396,11 +396,11 @@
 }
 
 .modeProgressImageTeamOneWin {
-	outline: 2px solid var(--color-info);
+	outline: 2px solid var(--color-accent);
 }
 
 .modeProgressImageTeamTwoWin {
-	outline: 2px solid var(--color-error);
+	outline: 2px solid var(--color-second);
 }
 
 .modeProgressImageSelected {
@@ -422,14 +422,14 @@
 
 .teamOneDot {
 	border-radius: 100%;
-	background-color: var(--color-info);
+	background-color: var(--color-accent);
 	width: 8px;
 	height: 8px;
 }
 
 .teamTwoDot {
 	border-radius: 100%;
-	background-color: var(--color-error);
+	background-color: var(--color-second);
 	width: 8px;
 	height: 8px;
 }
