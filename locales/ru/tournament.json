@@ -83,7 +83,6 @@
 	"actions.sub.prompt_zero": "Состав заполнен, больше нельзя добавить запасных",
 	"actions.finalize": "",
 	"actions.finalize.button": "",
-	"actions.finalize.notice": "",
 	"actions.finalize.action": "Завершить",
 	"actions.finalize.action.withBadges": "",
 	"actions.finalize.info": "",

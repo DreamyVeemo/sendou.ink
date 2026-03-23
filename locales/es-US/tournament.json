@@ -81,7 +81,6 @@
 	"actions.sub.prompt_zero": "Tu equipo está lleno y no puedes añadir más subs",
 	"actions.finalize": "",
 	"actions.finalize.button": "",
-	"actions.finalize.notice": "",
 	"actions.finalize.action": "Finalizar",
 	"actions.finalize.action.withBadges": "",
 	"actions.finalize.info": "",

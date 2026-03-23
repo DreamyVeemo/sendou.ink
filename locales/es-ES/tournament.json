@@ -81,7 +81,6 @@
 	"actions.sub.prompt_zero": "Tu equipo está lleno y no puedes añadir más subs",
 	"actions.finalize": "Finalizando torneo",
 	"actions.finalize.button": "",
-	"actions.finalize.notice": "",
 	"actions.finalize.action": "Finalizar",
 	"actions.finalize.action.withBadges": "Finalizar y asignar insignias",
 	"actions.finalize.info": "Esta acción no se puede deshacer. Asegúrate de que todos los resultados reportados son correctos antes de continuar.",

@@ -75,7 +75,6 @@
 	"actions.sub.prompt_zero": "メンバーが上限に達しているので、これ以上サブを追加することができません",
 	"actions.finalize": "",
 	"actions.finalize.button": "",
-	"actions.finalize.notice": "",
 	"actions.finalize.action": "トーナメント結果確定",
 	"actions.finalize.action.withBadges": "",
 	"actions.finalize.info": "",

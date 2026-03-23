@@ -81,7 +81,6 @@
 	"actions.sub.prompt_zero": "Il tuo roster è completo e non è possibile aggiungere altri sub",
 	"actions.finalize": "",
 	"actions.finalize.button": "",
-	"actions.finalize.notice": "",
 	"actions.finalize.action": "Finalizza",
 	"actions.finalize.action.withBadges": "",
 	"actions.finalize.info": "",

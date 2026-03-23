@@ -81,7 +81,6 @@
 	"actions.sub.prompt_zero": "Sua lista está cheia e mais nenhum(a) substituto(a) pode ser adicionado(a)",
 	"actions.finalize": "",
 	"actions.finalize.button": "",
-	"actions.finalize.notice": "",
 	"actions.finalize.action": "Finalizar Torneio",
 	"actions.finalize.action.withBadges": "",
 	"actions.finalize.info": "",
