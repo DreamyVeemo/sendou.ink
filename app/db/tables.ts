@@ -679,6 +679,35 @@ export interface TournamentRoundMaps {
 	pickBan?: PickBan.Type | null;
 }
 
+export const WHO_SIDES = [
+	"ALPHA",
+	"BRAVO",
+	"HIGHER_SEED",
+	"LOWER_SEED",
+	"WINNER",
+	"LOSER",
+] as const;
+export type WhoSide = (typeof WHO_SIDES)[number];
+
+export const ACTION_TYPES = [
+	"ROLL",
+	"PICK",
+	"BAN",
+	"MODE_PICK",
+	"MODE_BAN",
+] as const;
+export type ActionType = (typeof ACTION_TYPES)[number];
+
+export interface CustomPickBanStep {
+	action: ActionType;
+	side?: WhoSide;
+}
+
+export interface CustomPickBanFlow {
+	preSet: CustomPickBanStep[];
+	postGame: CustomPickBanStep[];
+}
+
 /**
  * A round is a logical structure used to group multiple matches together.
 
@@ -692,6 +721,7 @@ export interface TournamentRound {
 	number: number;
 	stageId: number;
 	maps: JSONColumnType<TournamentRoundMaps>;
+	customFlow?: JSONColumnTypeNullable<CustomPickBanFlow>;
 }
 
 // when updating this also update `defaultBracketSettings` in tournament-utils.ts

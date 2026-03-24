@@ -1,5 +1,5 @@
 import * as R from "remeda";
-import type { TournamentRoundMaps } from "~/db/tables";
+import type { ActionType, TournamentRoundMaps, WhoSide } from "~/db/tables";
 import type {
 	ModeShort,
 	ModeWithStage,
@@ -16,6 +16,7 @@ export const types = [
 	"COUNTERPICK",
 	"COUNTERPICK_MODE_REPEAT_OK",
 	"BAN_2",
+	"CUSTOM",
 ] as const;
 export type Type = (typeof types)[number];
 
@@ -79,6 +80,11 @@ export function turnOf({
 
 			return result;
 		}
+		// CLAUDETODO: implement this
+		case "CUSTOM": {
+			// custom flow handling is done separately
+			return null;
+		}
 		default: {
 			assertUnreachable(maps.pickBan);
 		}
@@ -141,6 +147,10 @@ export function mapsListWithLegality(args: MapListWithStatusesArgs) {
 
 				return args.toSetMapPool;
 			}
+			// CLAUDETODO: implement this
+			case "CUSTOM": {
+				return args.toSetMapPool;
+			}
 			default: {
 				assertUnreachable(args.maps.pickBan);
 			}
@@ -196,6 +206,10 @@ function unavailableStages({
 		case "COUNTERPICK": {
 			return new Set(results.map((result) => result.stageId));
 		}
+		// CLAUDETODO: implement this
+		case "CUSTOM": {
+			return new Set();
+		}
 		default: {
 			assertUnreachable(maps.pickBan);
 		}
@@ -214,7 +228,9 @@ function unavailableModes({
 	if (
 		!maps?.pickBan ||
 		maps.pickBan === "BAN_2" ||
-		maps.pickBan === "COUNTERPICK_MODE_REPEAT_OK"
+		maps.pickBan === "COUNTERPICK_MODE_REPEAT_OK" ||
+		// CLAUDETODO: implement this
+		maps.pickBan === "CUSTOM"
 	) {
 		return new Set();
 	}
@@ -228,4 +244,68 @@ function unavailableModes({
 	);
 
 	return result;
+}
+
+const BEFORE_SET_INVALID_WHO: ReadonlySet<WhoSide> = new Set([
+	"WINNER",
+	"LOSER",
+]);
+
+export const CUSTOM_FLOW_VALIDATION_ERRORS = {
+	STEP_MISSING_ACTION: "STEP_MISSING_ACTION",
+	STEP_MISSING_WHO: "STEP_MISSING_WHO",
+	LAST_STEP_MUST_BE_PICK_OR_ROLL: "LAST_STEP_MUST_BE_PICK_OR_ROLL",
+	WINNER_LOSER_IN_PRE_SET: "WINNER_LOSER_IN_PRE_SET",
+	TOO_MANY_MODE_PICKS: "TOO_MANY_MODE_PICKS",
+} as const;
+export type CustomFlowValidationError =
+	(typeof CUSTOM_FLOW_VALIDATION_ERRORS)[keyof typeof CUSTOM_FLOW_VALIDATION_ERRORS];
+
+interface ValidatableStep {
+	action?: ActionType;
+	side?: WhoSide;
+}
+
+export function validateCustomFlowSection(
+	steps: ValidatableStep[],
+	section: "preSet" | "postGame",
+): CustomFlowValidationError[] {
+	const errors: CustomFlowValidationError[] = [];
+
+	for (const step of steps) {
+		if (!step.action) {
+			errors.push(CUSTOM_FLOW_VALIDATION_ERRORS.STEP_MISSING_ACTION);
+			break;
+		}
+		if (step.action !== "ROLL" && !step.side) {
+			errors.push(CUSTOM_FLOW_VALIDATION_ERRORS.STEP_MISSING_WHO);
+			break;
+		}
+	}
+
+	const lastStep = steps.at(-1);
+	if (
+		!lastStep ||
+		(lastStep.action &&
+			lastStep.action !== "PICK" &&
+			lastStep.action !== "ROLL")
+	) {
+		errors.push(CUSTOM_FLOW_VALIDATION_ERRORS.LAST_STEP_MUST_BE_PICK_OR_ROLL);
+	}
+
+	if (section === "preSet") {
+		for (const step of steps) {
+			if (step.side && BEFORE_SET_INVALID_WHO.has(step.side)) {
+				errors.push(CUSTOM_FLOW_VALIDATION_ERRORS.WINNER_LOSER_IN_PRE_SET);
+				break;
+			}
+		}
+	}
+
+	const modePickCount = steps.filter((s) => s.action === "MODE_PICK").length;
+	if (modePickCount > 1) {
+		errors.push(CUSTOM_FLOW_VALIDATION_ERRORS.TOO_MANY_MODE_PICKS);
+	}
+
+	return errors;
 }

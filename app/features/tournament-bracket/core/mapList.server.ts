@@ -136,6 +136,8 @@ function resolveFreshTeamPickedMapList(
 			case "COUNTERPICK":
 			case "COUNTERPICK_MODE_REPEAT_OK":
 				return 1;
+			case "CUSTOM":
+				return 0;
 			default:
 				assertUnreachable(pickBan);
 		}

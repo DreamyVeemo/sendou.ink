@@ -17,7 +17,7 @@ import { InfoPopover } from "~/components/InfoPopover";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
-import type { TournamentRoundMaps } from "~/db/tables";
+import type { CustomPickBanFlow, TournamentRoundMaps } from "~/db/tables";
 import {
 	useTournament,
 	useTournamentPreparedMaps,
@@ -44,6 +44,9 @@ import {
 	type TournamentRoundMapList,
 } from "../core/toMapList";
 import styles from "./BracketMapListDialog.module.css";
+import { CustomFlowBuilder } from "./CustomFlowBuilder";
+
+// CLAUDETODO: restore initial state for the CustomFlowBuilder from prepared maps
 
 export function BracketMapListDialog({
 	close,
@@ -165,6 +168,9 @@ export function BracketMapListDialog({
 	const [pickBanStyle, setPickBanStyle] = React.useState(
 		Array.from(maps.values()).find((round) => round.pickBan)?.pickBan ??
 			"COUNTERPICK",
+	);
+	const [customFlow, setCustomFlow] = React.useState<CustomPickBanFlow | null>(
+		null,
 	);
 	const [hoveredMap, setHoveredMap] = React.useState<string | null>(null);
 
@@ -291,6 +297,7 @@ export function BracketMapListDialog({
 			bracket.type === "double_elimination") &&
 		!eliminationTeamCount;
 
+	// CLAUDETODO: we should not be able to submit/save map list if custom flow is wrong!
 	return (
 		<SendouDialog
 			heading={`Maplist selection (${bracket.name})`}
@@ -317,6 +324,13 @@ export function BracketMapListDialog({
 						})),
 					)}
 				/>
+				{customFlow ? (
+					<input
+						type="hidden"
+						name="customFlow"
+						value={JSON.stringify(customFlow)}
+					/>
+				) : null}
 				{isPreparing &&
 				(bracket.type === "single_elimination" ||
 					bracket.type === "double_elimination") ? (
@@ -466,6 +480,9 @@ export function BracketMapListDialog({
 								</SendouButton>
 							) : null}
 						</div>
+						{pickBanStyle === "CUSTOM" && !needsToPickEliminationTeamCount ? (
+							<CustomFlowBuilder value={customFlow} onChange={setCustomFlow} />
+						) : null}
 						{needsToPickEliminationTeamCount ? (
 							<div className="text-center text-lg font-bold my-24">
 								Pick the expected teams count above to prepare maps
@@ -830,6 +847,7 @@ function PickBanSelect({
 		COUNTERPICK: "Counterpick",
 		COUNTERPICK_MODE_REPEAT_OK: "Counterpick (mode repeat allowed)",
 		BAN_2: "Ban 2",
+		CUSTOM: "Custom",
 	};
 
 	// selection doesn't make sense for one mode only tournaments as you have to repeat the mode
@@ -952,44 +970,57 @@ function RoundMapList({
 				) : null}
 			</div>
 			<ol className="pl-0">
-				{nullFilledArray(
-					maps.pickBan === "BAN_2" ? maps.count + 2 : maps.count,
-				).map((_, i) => {
-					const map = maps.list?.[i];
-
-					if (map) {
-						return (
-							<MapListRow
+				{maps.pickBan === "CUSTOM"
+					? nullFilledArray(maps.count).map((_, i) => (
+							<MysteryRow
 								key={i}
-								map={map}
 								number={i + 1}
-								onHoverMap={onHoverMap}
-								hoveredMap={hoveredMap}
-								onMapChange={(map) => {
-									onRoundMapListChange({
-										...maps,
-										list: maps.list?.map((m, j) => (i === j ? map : m)),
-									});
-								}}
+								isCounterpicks={false}
+								isTiebreaker={false}
+								isCustomFlow
 							/>
-						);
-					}
+						))
+					: nullFilledArray(
+							maps.pickBan === "BAN_2" ? maps.count + 2 : maps.count,
+						).map((_, i) => {
+							const map = maps.list?.[i];
 
-					const isTeamsPick = !maps.list && i === 0;
-					const isLast =
-						i === (maps.pickBan === "BAN_2" ? maps.count + 2 : maps.count) - 1;
-
-					return (
-						<MysteryRow
-							key={i}
-							number={i + 1}
-							isCounterpicks={!isTeamsPick && maps.pickBan === "COUNTERPICK"}
-							isTiebreaker={
-								tournament.ctx.mapPickingStyle === "AUTO_ALL" && isLast
+							if (map) {
+								return (
+									<MapListRow
+										key={i}
+										map={map}
+										number={i + 1}
+										onHoverMap={onHoverMap}
+										hoveredMap={hoveredMap}
+										onMapChange={(map) => {
+											onRoundMapListChange({
+												...maps,
+												list: maps.list?.map((m, j) => (i === j ? map : m)),
+											});
+										}}
+									/>
+								);
 							}
-						/>
-					);
-				})}
+
+							const isTeamsPick = !maps.list && i === 0;
+							const isLast =
+								i ===
+								(maps.pickBan === "BAN_2" ? maps.count + 2 : maps.count) - 1;
+
+							return (
+								<MysteryRow
+									key={i}
+									number={i + 1}
+									isCounterpicks={
+										!isTeamsPick && maps.pickBan === "COUNTERPICK"
+									}
+									isTiebreaker={
+										tournament.ctx.mapPickingStyle === "AUTO_ALL" && isLast
+									}
+								/>
+							);
+						})}
 			</ol>
 		</div>
 	);
@@ -1066,10 +1097,12 @@ function MysteryRow({
 	number,
 	isCounterpicks,
 	isTiebreaker,
+	isCustomFlow,
 }: {
 	number: number;
 	isCounterpicks: boolean;
 	isTiebreaker: boolean;
+	isCustomFlow?: boolean;
 }) {
 	return (
 		<li className={styles.mapListRow}>
@@ -1079,11 +1112,13 @@ function MysteryRow({
 				})}
 			>
 				<span className="text-lg">{number}.</span>
-				{isCounterpicks
-					? "Counterpick"
-					: isTiebreaker
-						? "Tiebreaker"
-						: "Team's pick"}
+				{isCustomFlow
+					? "Custom flow"
+					: isCounterpicks
+						? "Counterpick"
+						: isTiebreaker
+							? "Tiebreaker"
+							: "Team's pick"}
 			</div>
 		</li>
 	);
