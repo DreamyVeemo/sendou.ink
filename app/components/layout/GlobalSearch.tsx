@@ -162,7 +162,8 @@ function resolveInitialWeapon(
 	if (Number.isNaN(id)) return null;
 	const name = t(`weapons:MAIN_${id}`);
 	if (!name || name === `MAIN_${id}`) return null;
-	return { id, name, slug: mySlugify(name) };
+	const englishName = t(`weapons:MAIN_${id}`, { lng: "en" });
+	return { id, name, englishName, slug: mySlugify(englishName) };
 }
 
 function GlobalSearchContent({
@@ -225,7 +226,8 @@ function GlobalSearchContent({
 		searchType === "weapons"
 			? getRecentWeapons().map((id) => {
 					const name = t(`weapons:MAIN_${id}`);
-					return { id, name, slug: mySlugify(name) };
+					const englishName = t(`weapons:MAIN_${id}`, { lng: "en" });
+					return { id, name, englishName, slug: mySlugify(englishName) };
 				})
 			: [];
 

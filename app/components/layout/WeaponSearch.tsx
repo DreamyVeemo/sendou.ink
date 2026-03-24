@@ -46,6 +46,7 @@ export type WeaponDestination = (typeof WEAPON_DESTINATIONS)[number];
 export interface SelectedWeapon {
 	id: MainWeaponId;
 	name: string;
+	englishName: string;
 	slug: string;
 }
 
@@ -67,10 +68,12 @@ export function filterWeaponResults(
 		});
 
 		if (isMatch) {
+			const englishName = t(`weapons:MAIN_${id}`, { lng: "en" });
 			matches.push({
 				id,
 				name: weaponName,
-				slug: mySlugify(t(`weapons:MAIN_${id}`, { lng: "en" })),
+				englishName,
+				slug: mySlugify(englishName),
 			});
 		}
 
@@ -90,7 +93,7 @@ export function getWeaponDestinationUrl(
 		stats: weaponBuildStatsPage(weapon.slug),
 		analyzer: `${ANALYZER_URL}?weapon=${weapon.id}`,
 		vods: `${VODS_PAGE}?weapon=${weapon.id}`,
-		art: `/art?tab=showcase&tag=${encodeURIComponent(weapon.name.toLowerCase())}`,
+		art: `/art?tab=showcase&tag=${encodeURIComponent(weapon.englishName.toLowerCase())}`,
 		lfg: `${LFG_PAGE}?q=w.${weapon.id}`,
 	};
 
