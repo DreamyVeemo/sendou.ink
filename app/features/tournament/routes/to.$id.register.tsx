@@ -6,6 +6,7 @@ import {
 	BookmarkCheck,
 	Check,
 	Clock,
+	Share2,
 	Trash,
 	User,
 	X,
@@ -16,6 +17,7 @@ import { Form, Link, useFetcher, useLoaderData } from "react-router";
 import { useCopyToClipboard } from "react-use";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
+import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -57,6 +59,7 @@ import {
 	SENDOU_INK_BASE_URL,
 	tournamentJoinPage,
 	tournamentOrganizationPage,
+	tournamentPage,
 	tournamentSubsPage,
 	userEditProfilePage,
 	userPage,
@@ -226,6 +229,7 @@ function TournamentRegisterInfoTabs() {
 								</div>
 							) : null}
 							<SaveTournamentButton />
+							<ShareTournamentButton />
 						</div>
 
 						<div className={styles.infoDescription}>
@@ -1324,6 +1328,44 @@ function SaveTournamentButton() {
 				{isSaved ? t("common:actions.unsave") : t("common:actions.save")}
 			</SendouButton>
 		</fetcher.Form>
+	);
+}
+
+function ShareTournamentButton() {
+	const { t } = useTranslation(["common"]);
+	const tournament = useTournament();
+
+	const url = `${SENDOU_INK_BASE_URL}${tournamentPage(tournament.ctx.id)}`;
+
+	const handleShare = () => {
+		navigator.share({ url });
+	};
+
+	if (
+		typeof navigator !== "undefined" &&
+		typeof navigator.share === "function"
+	) {
+		return (
+			<SendouButton
+				variant="outlined"
+				size="small"
+				icon={<Share2 />}
+				onPress={handleShare}
+			>
+				{t("common:actions.share")}
+			</SendouButton>
+		);
+	}
+
+	return (
+		<CopyToClipboardPopover
+			url={url}
+			trigger={
+				<SendouButton variant="outlined" size="small" icon={<Share2 />}>
+					{t("common:actions.share")}
+				</SendouButton>
+			}
+		/>
 	);
 }
 

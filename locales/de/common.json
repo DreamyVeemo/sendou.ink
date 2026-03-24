@@ -104,6 +104,7 @@
 	"footer.discord.subtitle": "Hilfe & Feedback",
 	"footer.patreon.subtitle": "Support",
 	"footer.thanks": "Danke an die Patrons für den Support",
+	"actions.share": "",
 	"actions.save": "Speichern",
 	"actions.unsave": "",
 	"actions.saveChanges": "Änderungen speichern",
