@@ -20,6 +20,7 @@ import { Image } from "~/components/Image";
 import { Input } from "~/components/Input";
 import type { SearchLoaderData } from "~/features/search/routes/search";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { altWeaponIdToId } from "~/modules/in-game-lists/weapon-ids";
 import {
 	mySlugify,
 	navIconUrl,
@@ -163,7 +164,12 @@ function resolveInitialWeapon(
 	const name = t(`weapons:MAIN_${id}`);
 	if (!name || name === `MAIN_${id}`) return null;
 	const englishName = t(`weapons:MAIN_${id}`, { lng: "en" });
-	return { id, name, englishName, slug: mySlugify(englishName) };
+	const baseId = altWeaponIdToId.get(id);
+	const slugName =
+		baseId !== undefined
+			? t(`weapons:MAIN_${baseId}`, { lng: "en" })
+			: englishName;
+	return { id, name, englishName, slug: mySlugify(slugName) };
 }
 
 function GlobalSearchContent({
@@ -227,7 +233,12 @@ function GlobalSearchContent({
 			? getRecentWeapons().map((id) => {
 					const name = t(`weapons:MAIN_${id}`);
 					const englishName = t(`weapons:MAIN_${id}`, { lng: "en" });
-					return { id, name, englishName, slug: mySlugify(englishName) };
+					const baseId = altWeaponIdToId.get(id);
+					const slugName =
+						baseId !== undefined
+							? t(`weapons:MAIN_${baseId}`, { lng: "en" })
+							: englishName;
+					return { id, name, englishName, slug: mySlugify(slugName) };
 				})
 			: [];
 

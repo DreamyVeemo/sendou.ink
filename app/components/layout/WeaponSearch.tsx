@@ -17,8 +17,8 @@ import { Image } from "~/components/Image";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { filterWeapon } from "~/modules/in-game-lists/utils";
 import {
+	altWeaponIdToId,
 	mainWeaponIds,
-	weaponIdToType,
 } from "~/modules/in-game-lists/weapon-ids";
 import {
 	ANALYZER_URL,
@@ -58,8 +58,6 @@ export function filterWeaponResults(
 
 	const matches: SelectedWeapon[] = [];
 	for (const id of mainWeaponIds) {
-		if (weaponIdToType(id) === "ALT_SKIN") continue;
-
 		const weaponName = t(`weapons:MAIN_${id}`);
 		const isMatch = filterWeapon({
 			weapon: { type: "MAIN", id },
@@ -69,11 +67,16 @@ export function filterWeaponResults(
 
 		if (isMatch) {
 			const englishName = t(`weapons:MAIN_${id}`, { lng: "en" });
+			const baseId = altWeaponIdToId.get(id);
+			const slugName =
+				baseId !== undefined
+					? t(`weapons:MAIN_${baseId}`, { lng: "en" })
+					: englishName;
 			matches.push({
 				id,
 				name: weaponName,
 				englishName,
-				slug: mySlugify(englishName),
+				slug: mySlugify(slugName),
 			});
 		}
 
