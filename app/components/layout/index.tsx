@@ -52,6 +52,8 @@ import notificationPopoverStyles from "./NotificationPopover.module.css";
 import { TopNavMenus } from "./TopNavMenus";
 import { TopRightButtons } from "./TopRightButtons";
 
+const MAX_DESKTOP_FRIENDS = 4;
+
 function useTimeFormat() {
 	const { i18n } = useTranslation();
 
@@ -310,7 +312,9 @@ export function Layout({
 				{t("front:sideNav.friends")}
 			</SideNavHeader>
 			{friends.length > 0 ? (
-				friends.map((friend) => <FriendMenu key={friend.id} {...friend} />)
+				friends
+					.slice(0, MAX_DESKTOP_FRIENDS)
+					.map((friend) => <FriendMenu key={friend.id} {...friend} />)
 			) : (
 				<div className={styles.sideNavEmpty}>
 					{user
