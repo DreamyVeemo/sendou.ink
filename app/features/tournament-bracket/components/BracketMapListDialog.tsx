@@ -46,7 +46,7 @@ import {
 import styles from "./BracketMapListDialog.module.css";
 import { CustomFlowBuilder } from "./CustomFlowBuilder";
 
-// CLAUDETODO: restore initial state for the CustomFlowBuilder from prepared maps
+// CLAUDETODO: (pre-existing bug) currently if you select pick/ban or even with custom flow and save maps without selecting any map to contain them, the flow is not saved in the prepared maps. warn on save?
 
 export function BracketMapListDialog({
 	close,
@@ -170,7 +170,7 @@ export function BracketMapListDialog({
 			"COUNTERPICK",
 	);
 	const [customFlow, setCustomFlow] = React.useState<CustomPickBanFlow | null>(
-		null,
+		preparedMaps?.maps.find((m) => m.customFlow)?.customFlow ?? null,
 	);
 	const [hoveredMap, setHoveredMap] = React.useState<string | null>(null);
 
@@ -321,16 +321,10 @@ export function BracketMapListDialog({
 							roundId: key,
 							groupId: rounds.find((r) => r.id === key)?.group_id,
 							type: countType,
+							customFlow: value.pickBan === "CUSTOM" ? customFlow : undefined,
 						})),
 					)}
 				/>
-				{customFlow ? (
-					<input
-						type="hidden"
-						name="customFlow"
-						value={JSON.stringify(customFlow)}
-					/>
-				) : null}
 				{isPreparing &&
 				(bracket.type === "single_elimination" ||
 					bracket.type === "double_elimination") ? (

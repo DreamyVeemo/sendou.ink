@@ -677,6 +677,7 @@ export interface TournamentRoundMaps {
 	count: number;
 	type: "BEST_OF" | "PLAY_ALL";
 	pickBan?: PickBan.Type | null;
+	customFlow?: CustomPickBanFlow | null;
 }
 
 export const WHO_SIDES = [
@@ -721,7 +722,6 @@ export interface TournamentRound {
 	number: number;
 	stageId: number;
 	maps: JSONColumnType<TournamentRoundMaps>;
-	customFlow?: JSONColumnTypeNullable<CustomPickBanFlow>;
 }
 
 // when updating this also update `defaultBracketSettings` in tournament-utils.ts
