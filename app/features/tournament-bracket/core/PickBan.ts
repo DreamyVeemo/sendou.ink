@@ -28,6 +28,8 @@ export type Type = (typeof types)[number];
 export interface TurnOfResult {
 	teamId: number;
 	action: ActionType;
+	stepCurrent?: number;
+	stepTotal?: number;
 }
 
 export function turnOf({
@@ -143,7 +145,76 @@ function turnOfCustom({
 		results,
 	});
 
-	return { teamId, action: step.action };
+	const consecutiveInfo = resolveConsecutiveStepInfo({
+		eventCount,
+		preSet,
+		postGame,
+	});
+
+	return {
+		teamId,
+		action: step.action,
+		stepCurrent: consecutiveInfo.current,
+		stepTotal: consecutiveInfo.total,
+	};
+}
+
+function resolveConsecutiveStepInfo({
+	eventCount,
+	preSet,
+	postGame,
+}: {
+	eventCount: number;
+	preSet: CustomPickBanStep[];
+	postGame: CustomPickBanStep[];
+}): { current: number; total: number } {
+	const inPreSet = eventCount < preSet.length;
+
+	if (inPreSet) {
+		const currentStep = preSet[eventCount]!;
+		let start = eventCount;
+		while (
+			start > 0 &&
+			preSet[start - 1]!.action === currentStep.action &&
+			preSet[start - 1]!.side === currentStep.side
+		) {
+			start--;
+		}
+		let end = eventCount;
+		while (
+			end < preSet.length - 1 &&
+			preSet[end + 1]!.action === currentStep.action &&
+			preSet[end + 1]!.side === currentStep.side
+		) {
+			end++;
+		}
+
+		return { current: eventCount - start + 1, total: end - start + 1 };
+	}
+
+	if (postGame.length === 0) return { current: 1, total: 1 };
+
+	const stepIndex = (eventCount - preSet.length) % postGame.length;
+	const currentStep = postGame[stepIndex]!;
+
+	let start = stepIndex;
+	while (
+		start > 0 &&
+		postGame[start - 1]!.action === currentStep.action &&
+		postGame[start - 1]!.side === currentStep.side
+	) {
+		start--;
+	}
+	let end = stepIndex;
+	while (
+		end < postGame.length - 1 &&
+		postGame[end + 1]!.action === currentStep.action &&
+		postGame[end + 1]!.side === currentStep.side
+	) {
+		end++;
+	}
+
+	return { current: stepIndex - start + 1, total: end - start + 1 };
 }
 
 export function resolveCurrentStep({

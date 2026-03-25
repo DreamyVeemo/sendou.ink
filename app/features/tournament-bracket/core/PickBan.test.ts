@@ -359,7 +359,12 @@ describe("turnOf — CUSTOM flow", () => {
 			pickBanEventCount: 0,
 		});
 
-		expect(result).toEqual({ teamId: 200, action: "BAN" });
+		expect(result).toEqual({
+			teamId: 200,
+			action: "BAN",
+			stepCurrent: 1,
+			stepTotal: 1,
+		});
 	});
 
 	it("returns second preSet step", () => {
@@ -370,7 +375,12 @@ describe("turnOf — CUSTOM flow", () => {
 			pickBanEventCount: 1,
 		});
 
-		expect(result).toEqual({ teamId: 100, action: "BAN" });
+		expect(result).toEqual({
+			teamId: 100,
+			action: "BAN",
+			stepCurrent: 1,
+			stepTotal: 1,
+		});
 	});
 
 	it("returns null when waiting for game result", () => {
@@ -392,7 +402,12 @@ describe("turnOf — CUSTOM flow", () => {
 			pickBanEventCount: 3,
 		});
 
-		expect(result).toEqual({ teamId: 200, action: "BAN" });
+		expect(result).toEqual({
+			teamId: 200,
+			action: "BAN",
+			stepCurrent: 1,
+			stepTotal: 1,
+		});
 	});
 
 	it("returns null for ROLL steps", () => {
@@ -440,6 +455,130 @@ describe("turnOf — CUSTOM flow", () => {
 		});
 
 		expect(result).toBeNull();
+	});
+});
+
+describe("turnOf — CUSTOM flow stepCurrent/stepTotal", () => {
+	const teams: [number, number] = [100, 200];
+
+	it("counts consecutive bans by same side in preSet", () => {
+		const maps: TournamentRoundMaps = {
+			count: 5,
+			type: "BEST_OF",
+			pickBan: "CUSTOM",
+			customFlow: {
+				preSet: [
+					{ action: "BAN", side: "HIGHER_SEED" },
+					{ action: "BAN", side: "HIGHER_SEED" },
+					{ action: "BAN", side: "LOWER_SEED" },
+					{ action: "PICK", side: "LOWER_SEED" },
+				],
+				postGame: [{ action: "PICK", side: "LOSER" }],
+			},
+		};
+
+		expect(
+			turnOf({ results: [], maps, teams, pickBanEventCount: 0 }),
+		).toMatchObject({ stepCurrent: 1, stepTotal: 2 });
+
+		expect(
+			turnOf({ results: [], maps, teams, pickBanEventCount: 1 }),
+		).toMatchObject({ stepCurrent: 2, stepTotal: 2 });
+
+		expect(
+			turnOf({ results: [], maps, teams, pickBanEventCount: 2 }),
+		).toMatchObject({ stepCurrent: 1, stepTotal: 1 });
+	});
+
+	it("counts consecutive bans by same side in postGame", () => {
+		const maps: TournamentRoundMaps = {
+			count: 5,
+			type: "BEST_OF",
+			pickBan: "CUSTOM",
+			customFlow: {
+				preSet: [{ action: "PICK", side: "HIGHER_SEED" }],
+				postGame: [
+					{ action: "BAN", side: "WINNER" },
+					{ action: "BAN", side: "WINNER" },
+					{ action: "PICK", side: "LOSER" },
+				],
+			},
+		};
+
+		expect(
+			turnOf({
+				results: [{ winnerTeamId: 200 }],
+				maps,
+				teams,
+				pickBanEventCount: 1,
+			}),
+		).toMatchObject({ stepCurrent: 1, stepTotal: 2 });
+
+		expect(
+			turnOf({
+				results: [{ winnerTeamId: 200 }],
+				maps,
+				teams,
+				pickBanEventCount: 2,
+			}),
+		).toMatchObject({ stepCurrent: 2, stepTotal: 2 });
+
+		expect(
+			turnOf({
+				results: [{ winnerTeamId: 200 }],
+				maps,
+				teams,
+				pickBanEventCount: 3,
+			}),
+		).toMatchObject({ stepCurrent: 1, stepTotal: 1 });
+	});
+
+	it("does not group consecutive steps with different sides", () => {
+		const maps: TournamentRoundMaps = {
+			count: 5,
+			type: "BEST_OF",
+			pickBan: "CUSTOM",
+			customFlow: {
+				preSet: [
+					{ action: "BAN", side: "HIGHER_SEED" },
+					{ action: "BAN", side: "LOWER_SEED" },
+					{ action: "PICK", side: "HIGHER_SEED" },
+				],
+				postGame: [{ action: "PICK", side: "LOSER" }],
+			},
+		};
+
+		expect(
+			turnOf({ results: [], maps, teams, pickBanEventCount: 0 }),
+		).toMatchObject({ stepCurrent: 1, stepTotal: 1 });
+
+		expect(
+			turnOf({ results: [], maps, teams, pickBanEventCount: 1 }),
+		).toMatchObject({ stepCurrent: 1, stepTotal: 1 });
+	});
+
+	it("does not group consecutive steps with different actions", () => {
+		const maps: TournamentRoundMaps = {
+			count: 5,
+			type: "BEST_OF",
+			pickBan: "CUSTOM",
+			customFlow: {
+				preSet: [
+					{ action: "MODE_BAN", side: "HIGHER_SEED" },
+					{ action: "BAN", side: "HIGHER_SEED" },
+					{ action: "PICK", side: "HIGHER_SEED" },
+				],
+				postGame: [{ action: "PICK", side: "LOSER" }],
+			},
+		};
+
+		expect(
+			turnOf({ results: [], maps, teams, pickBanEventCount: 0 }),
+		).toMatchObject({ stepCurrent: 1, stepTotal: 1 });
+
+		expect(
+			turnOf({ results: [], maps, teams, pickBanEventCount: 1 }),
+		).toMatchObject({ stepCurrent: 1, stepTotal: 1 });
 	});
 });
 

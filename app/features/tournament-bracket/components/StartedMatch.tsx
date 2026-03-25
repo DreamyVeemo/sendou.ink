@@ -168,6 +168,8 @@ export function StartedMatch({
 		) : null,
 	];
 
+	// CLAUDETODO: in the pick ban UI, show outline as the "team's" color who did that pick or ban
+
 	return (
 		<div className={styles.duringMatchActions}>
 			<FancyStageBanner
@@ -361,15 +363,20 @@ function FancyStageBanner({
 
 	const noStageHeading = () => {
 		if (data.match.roundMaps?.pickBan === "CUSTOM" && turnOfResult) {
+			const stepCounter =
+				turnOfResult.stepTotal && turnOfResult.stepTotal > 1
+					? ` (${turnOfResult.stepCurrent}/${turnOfResult.stepTotal})`
+					: "";
+
 			switch (turnOfResult.action) {
 				case "PICK":
-					return t("tournament:pickBan.pickMap");
+					return t("tournament:pickBan.pickMap") + stepCounter;
 				case "BAN":
-					return t("tournament:pickBan.banMap");
+					return t("tournament:pickBan.banMap") + stepCounter;
 				case "MODE_PICK":
-					return t("tournament:pickBan.pickMode");
+					return t("tournament:pickBan.pickMode") + stepCounter;
 				case "MODE_BAN":
-					return t("tournament:pickBan.banMode");
+					return t("tournament:pickBan.banMode") + stepCounter;
 				default:
 					return t("tournament:pickBan.counterpick");
 			}
