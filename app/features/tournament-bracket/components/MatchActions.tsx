@@ -114,10 +114,13 @@ export function MatchActions({
 			maps: data.match.roundMaps,
 			teams: [teams[0].id, teams[1].id],
 			mapList: data.mapList,
+			pickBanEventCount: data.pickBanEventCount,
 		});
 
 	if (turnOf) {
-		return <MatchActionsBanPicker key={turnOf} teams={[teams[0], teams[1]]} />;
+		return (
+			<MatchActionsBanPicker key={turnOf.teamId} teams={[teams[0], teams[1]]} />
+		);
 	}
 
 	const bothTeamsHaveActiveRosters = teams.every((team) =>

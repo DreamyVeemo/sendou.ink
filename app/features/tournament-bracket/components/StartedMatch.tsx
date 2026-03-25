@@ -265,6 +265,8 @@ export function StartedMatch({
 	);
 }
 
+// CLAUDETODO: when we have two bans in a row the state doesn't get cleared so there is a visual bug: a map shows both selected and banned at the same time
+// CLAUDETODO: lets make distinction between selected and already banned. maybe e.g. for banning show the cross in a different color (grey?) and then red only when it's banned and can no longer be changed.
 function FancyStageBanner({
 	stage,
 	infos,
@@ -291,7 +293,7 @@ function FancyStageBanner({
 		return `${stageImageUrl(stageId)}.png`;
 	};
 
-	const banPickingTeam = () => {
+	const turnOfResult = (() => {
 		if (
 			!data.match.roundMaps ||
 			!data.match.opponentOne?.id ||
@@ -300,14 +302,19 @@ function FancyStageBanner({
 			return null;
 		}
 
-		const pickingTeamId = PickBan.turnOf({
+		return PickBan.turnOf({
 			results: data.results,
 			maps: data.match.roundMaps,
 			teams: [data.match.opponentOne.id, data.match.opponentTwo.id],
 			mapList: data.mapList,
+			pickBanEventCount: data.pickBanEventCount,
 		});
+	})();
 
-		return pickingTeamId ? teams.find((t) => t.id === pickingTeamId) : null;
+	const banPickingTeam = () => {
+		return turnOfResult
+			? teams.find((t) => t.id === turnOfResult.teamId)
+			: null;
 	};
 
 	const style = {
@@ -354,6 +361,24 @@ function FancyStageBanner({
 		data.match.roundId,
 	);
 
+	const noStageHeading = () => {
+		if (data.match.roundMaps?.pickBan === "CUSTOM" && turnOfResult) {
+			switch (turnOfResult.action) {
+				case "PICK":
+					return t("tournament:pickBan.pickMap");
+				case "BAN":
+					return t("tournament:pickBan.banMap");
+				case "MODE_PICK":
+					return t("tournament:pickBan.pickMode");
+				case "MODE_BAN":
+					return t("tournament:pickBan.banMode");
+				default:
+					return t("tournament:pickBan.counterpick");
+			}
+		}
+		return t("tournament:pickBan.counterpick");
+	};
+
 	return (
 		<>
 			{inBanPhase ? (
@@ -366,7 +391,9 @@ function FancyStageBanner({
 			) : !stage ? (
 				<div className={styles.lockedBanner}>
 					<div className="stack sm items-center">
-						<div className="text-lg text-center font-bold">Counterpick</div>
+						<div className="text-lg text-center font-bold">
+							{noStageHeading()}
+						</div>
 						<div>Waiting for {banPickingTeam()?.name}</div>
 						{children}
 					</div>

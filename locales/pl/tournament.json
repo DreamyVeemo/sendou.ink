@@ -57,6 +57,7 @@
 	"pickInfo.votes_many": "",
 	"pickInfo.votes_other": "",
 	"pickInfo.counterpick": "",
+	"pickInfo.roll": "",
 	"generator.error": "Zmiany nie zostały zapisane z powodu rozpoczęcia turnieju",
 	"teams.mapsPickedStatus": "Status wybranych map",
 	"admin.download": "Zapisz uczestników",
@@ -178,5 +179,10 @@
 	"customFlow.action.PICK": "",
 	"customFlow.action.BAN": "",
 	"customFlow.action.MODE_PICK": "",
-	"customFlow.action.MODE_BAN": ""
+	"customFlow.action.MODE_BAN": "",
+	"pickBan.counterpick": "",
+	"pickBan.pickMap": "",
+	"pickBan.banMap": "",
+	"pickBan.pickMode": "",
+	"pickBan.banMode": ""
 }

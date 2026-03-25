@@ -1,5 +1,10 @@
 import * as R from "remeda";
-import type { ActionType, TournamentRoundMaps, WhoSide } from "~/db/tables";
+import type {
+	ActionType,
+	CustomPickBanStep,
+	TournamentRoundMaps,
+	WhoSide,
+} from "~/db/tables";
 import type {
 	ModeShort,
 	ModeWithStage,
@@ -20,22 +25,29 @@ export const types = [
 ] as const;
 export type Type = (typeof types)[number];
 
+export interface TurnOfResult {
+	teamId: number;
+	action: ActionType;
+}
+
 export function turnOf({
 	results,
 	maps,
 	teams,
 	mapList,
+	pickBanEventCount,
 }: {
 	results: Array<{ winnerTeamId: number }>;
 	maps: TournamentRoundMaps;
 	teams: [number, number];
 	mapList?: TournamentMapListMap[] | null;
-}) {
+	pickBanEventCount?: number;
+}): TurnOfResult | null {
 	if (!maps.pickBan) return null;
-	if (!mapList) return null;
 
 	switch (maps.pickBan) {
 		case "BAN_2": {
+			if (!mapList) return null;
 			if (
 				isSetOverByResults({ count: maps.count, results, countType: maps.type })
 			) {
@@ -48,19 +60,20 @@ export function turnOf({
 			if (
 				!mapList.some((map) => map.bannedByTournamentTeamId === firstPicker)
 			) {
-				return firstPicker;
+				return { teamId: firstPicker, action: "BAN" };
 			}
 
 			if (
 				!mapList.some((map) => map.bannedByTournamentTeamId === secondPicker)
 			) {
-				return secondPicker;
+				return { teamId: secondPicker, action: "BAN" };
 			}
 
 			return null;
 		}
 		case "COUNTERPICK_MODE_REPEAT_OK":
 		case "COUNTERPICK": {
+			if (!mapList) return null;
 			// there exists an unplayed map
 			if (mapList.length > results.length) return null;
 
@@ -73,21 +86,129 @@ export function turnOf({
 			const latestWinner = results[results.length - 1]?.winnerTeamId;
 			invariant(latestWinner, "turnOf: No winner found");
 
-			const result = teams.find(
+			const teamId = teams.find(
 				(tournamentTeamId) => latestWinner !== tournamentTeamId,
 			);
-			invariant(result, "turnOf: No result found");
+			invariant(teamId, "turnOf: No result found");
 
-			return result;
+			return { teamId, action: "PICK" };
 		}
-		// CLAUDETODO: implement this
 		case "CUSTOM": {
-			// custom flow handling is done separately
-			return null;
+			return turnOfCustom({ results, maps, teams, pickBanEventCount });
 		}
 		default: {
 			assertUnreachable(maps.pickBan);
 		}
+	}
+}
+
+function turnOfCustom({
+	results,
+	maps,
+	teams,
+	pickBanEventCount,
+}: {
+	results: Array<{ winnerTeamId: number }>;
+	maps: TournamentRoundMaps;
+	teams: [number, number];
+	pickBanEventCount?: number;
+}): TurnOfResult | null {
+	if (
+		isSetOverByResults({ count: maps.count, results, countType: maps.type })
+	) {
+		return null;
+	}
+
+	const customFlow = maps.customFlow;
+	if (!customFlow) return null;
+
+	const eventCount = pickBanEventCount ?? 0;
+	const preSet = customFlow.preSet;
+	const postGame = customFlow.postGame;
+
+	const step = resolveCurrentStep({
+		eventCount,
+		preSet,
+		postGame,
+		resultsCount: results.length,
+	});
+	if (!step) return null;
+
+	// ROLL steps are handled by the server, not by a team
+	if (step.action === "ROLL") return null;
+
+	const teamId = resolveTeamFromSide({
+		side: step.side!,
+		teams,
+		results,
+	});
+
+	return { teamId, action: step.action };
+}
+
+export function resolveCurrentStep({
+	eventCount,
+	preSet,
+	postGame,
+	resultsCount,
+}: {
+	eventCount: number;
+	preSet: CustomPickBanStep[];
+	postGame: CustomPickBanStep[];
+	resultsCount: number;
+}): CustomPickBanStep | null {
+	if (eventCount < preSet.length) {
+		return preSet[eventCount]!;
+	}
+
+	if (postGame.length === 0) return null;
+
+	const eventsAfterPreSet = eventCount - preSet.length;
+	const stepInPostGame = eventsAfterPreSet % postGame.length;
+	const completedPostGameCycles = Math.floor(
+		eventsAfterPreSet / postGame.length,
+	);
+
+	// waiting for game result
+	if (completedPostGameCycles > resultsCount) return null;
+	if (completedPostGameCycles === resultsCount && stepInPostGame === 0) {
+		return null;
+	}
+
+	return postGame[stepInPostGame]!;
+}
+
+export function resolveTeamFromSide({
+	side,
+	teams,
+	results,
+}: {
+	side: WhoSide;
+	teams: [number, number];
+	results: Array<{ winnerTeamId: number }>;
+}): number {
+	switch (side) {
+		case "ALPHA":
+			return teams[0];
+		case "BRAVO":
+			return teams[1];
+		case "HIGHER_SEED":
+			// teams[1] is higher seed (convention: second = higher seed)
+			return teams[1];
+		case "LOWER_SEED":
+			return teams[0];
+		case "WINNER": {
+			const lastWinner = results[results.length - 1]?.winnerTeamId;
+			invariant(lastWinner, "resolveTeamFromSide: No winner found");
+			return lastWinner;
+		}
+		case "LOSER": {
+			const lastWinner = results[results.length - 1]?.winnerTeamId;
+			invariant(lastWinner, "resolveTeamFromSide: No winner found");
+			return teams.find((t) => t !== lastWinner)!;
+		}
+		default:
+			assertUnreachable(side);
 	}
 }
 
@@ -102,6 +223,12 @@ export function isLegal({
 	);
 }
 
+export interface PickBanEvent {
+	type: string;
+	stageId: StageId | null;
+	mode: ModeShort | null;
+}
+
 interface MapListWithStatusesArgs {
 	results: Array<{ mode: ModeShort; stageId: StageId; winnerTeamId: number }>;
 	maps: TournamentRoundMaps | null;
@@ -110,6 +237,7 @@ interface MapListWithStatusesArgs {
 	pickerTeamId: number;
 	tieBreakerMapPool: ModeWithStage[];
 	toSetMapPool: Array<{ mode: ModeShort; stageId: StageId }>;
+	pickBanEvents?: PickBanEvent[];
 }
 export function mapsListWithLegality(args: MapListWithStatusesArgs) {
 	const mapPool = (() => {
@@ -147,9 +275,29 @@ export function mapsListWithLegality(args: MapListWithStatusesArgs) {
 
 				return args.toSetMapPool;
 			}
-			// CLAUDETODO: implement this
 			case "CUSTOM": {
-				return args.toSetMapPool;
+				if (args.toSetMapPool.length > 0) {
+					return args.toSetMapPool;
+				}
+
+				const combinedPools = [
+					...(args.teams[0].mapPool ?? []),
+					...(args.teams[1].mapPool ?? []),
+					...args.tieBreakerMapPool,
+				];
+
+				const deduped: ModeWithStage[] = [];
+				for (const map of combinedPools) {
+					if (
+						!deduped.some(
+							(m) => m.mode === map.mode && m.stageId === map.stageId,
+						)
+					) {
+						deduped.push(map);
+					}
+				}
+
+				return deduped;
 			}
 			default: {
 				assertUnreachable(args.maps.pickBan);
@@ -187,10 +335,12 @@ function unavailableStages({
 	results,
 	mapList,
 	maps,
+	pickBanEvents,
 }: {
 	results: Array<{ mode: ModeShort; stageId: StageId }>;
 	mapList?: TournamentMapListMap[] | null;
 	maps: TournamentRoundMaps | null;
+	pickBanEvents?: PickBanEvent[];
 }): Set<StageId> {
 	if (!maps?.pickBan) return new Set();
 
@@ -206,9 +356,12 @@ function unavailableStages({
 		case "COUNTERPICK": {
 			return new Set(results.map((result) => result.stageId));
 		}
-		// CLAUDETODO: implement this
 		case "CUSTOM": {
-			return new Set();
+			const bannedStages = (pickBanEvents ?? [])
+				.filter((e) => e.type === "BAN" && e.stageId !== null)
+				.map((e) => e.stageId!);
+			const playedStages = results.map((r) => r.stageId);
+			return new Set([...bannedStages, ...playedStages]);
 		}
 		default: {
 			assertUnreachable(maps.pickBan);
@@ -220,22 +373,37 @@ function unavailableModes({
 	results,
 	pickerTeamId,
 	maps,
+	pickBanEvents,
 }: {
 	results: Array<{ mode: ModeShort; winnerTeamId: number }>;
 	pickerTeamId: number;
 	maps: TournamentRoundMaps | null;
+	pickBanEvents?: PickBanEvent[];
 }): Set<ModeShort> {
 	if (
 		!maps?.pickBan ||
 		maps.pickBan === "BAN_2" ||
-		maps.pickBan === "COUNTERPICK_MODE_REPEAT_OK" ||
-		// CLAUDETODO: implement this
-		maps.pickBan === "CUSTOM"
+		maps.pickBan === "COUNTERPICK_MODE_REPEAT_OK"
 	) {
 		return new Set();
 	}
 
-	// can't pick the same mode last won on
+	if (maps.pickBan === "CUSTOM") {
+		const modeBans = (pickBanEvents ?? [])
+			.filter((e) => e.type === "MODE_BAN" && e.mode !== null)
+			.map((e) => e.mode!);
+
+		// If the immediately preceding event is a MODE_PICK, only that mode is available
+		const lastEvent = (pickBanEvents ?? []).at(-1);
+		if (lastEvent?.type === "MODE_PICK" && lastEvent.mode) {
+			const allModes: ModeShort[] = ["TW", "SZ", "TC", "RM", "CB"];
+			return new Set(allModes.filter((m) => m !== lastEvent.mode));
+		}
+
+		return new Set(modeBans);
+	}
+
+	// COUNTERPICK: can't pick the same mode last won on
 	const result = new Set(
 		results
 			.filter((result) => result.winnerTeamId === pickerTeamId)

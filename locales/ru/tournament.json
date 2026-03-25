@@ -57,6 +57,7 @@
 	"pickInfo.votes_many": "",
 	"pickInfo.votes_other": "",
 	"pickInfo.counterpick": "Контрвыбор",
+	"pickInfo.roll": "",
 	"generator.error": "Ваши изменения не были сохранены так как турнир начался",
 	"teams.mapsPickedStatus": "Статус выбранных карт",
 	"admin.download": "Скачать участников",
@@ -178,5 +179,10 @@
 	"customFlow.action.PICK": "",
 	"customFlow.action.BAN": "",
 	"customFlow.action.MODE_PICK": "",
-	"customFlow.action.MODE_BAN": ""
+	"customFlow.action.MODE_BAN": "",
+	"pickBan.counterpick": "",
+	"pickBan.pickMap": "",
+	"pickBan.banMap": "",
+	"pickBan.pickMode": "",
+	"pickBan.banMode": ""
 }

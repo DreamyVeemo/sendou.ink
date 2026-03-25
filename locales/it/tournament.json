@@ -56,6 +56,7 @@
 	"pickInfo.votes_many": "",
 	"pickInfo.votes_other": "",
 	"pickInfo.counterpick": "Counterpick",
+	"pickInfo.roll": "",
 	"generator.error": "I cambiamenti che hai fatto non sono stati salvati visto che il torneo è già cominciato.",
 	"teams.mapsPickedStatus": "Stato scenari selezionati",
 	"admin.download": "Download partecipanti",
@@ -176,5 +177,10 @@
 	"customFlow.action.PICK": "",
 	"customFlow.action.BAN": "",
 	"customFlow.action.MODE_PICK": "",
-	"customFlow.action.MODE_BAN": ""
+	"customFlow.action.MODE_BAN": "",
+	"pickBan.counterpick": "",
+	"pickBan.pickMap": "",
+	"pickBan.banMap": "",
+	"pickBan.pickMode": "",
+	"pickBan.banMode": ""
 }

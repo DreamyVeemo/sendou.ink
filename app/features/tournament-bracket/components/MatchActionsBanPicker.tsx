@@ -6,7 +6,7 @@ import { useFetcher, useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
 import { ModeImage, StageImage } from "~/components/Image";
 import { SubmitButton } from "~/components/SubmitButton";
-import type { TournamentRoundMaps } from "~/db/tables";
+import type { ActionType, TournamentRoundMaps } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { modesShort } from "~/modules/in-game-lists/modes";
@@ -30,26 +30,43 @@ export function MatchActionsBanPicker({
 		stageId: StageId;
 	}>();
 
-	const pickerTeamId = PickBan.turnOf({
+	const turnOfResult = PickBan.turnOf({
 		results: data.results,
 		maps,
 		teams: [teams[0].id, teams[1].id],
 		mapList: data.mapList,
+		pickBanEventCount: data.pickBanEventCount,
 	})!;
+	const pickerTeamId = turnOfResult.teamId;
 	const pickingTeam = teams.find((team) => team.id === pickerTeamId)!;
+
+	const actionType = turnOfResult.action;
+	const isModePick = actionType === "MODE_PICK";
+	const isModeBan = actionType === "MODE_BAN";
+	const isModeAction = isModePick || isModeBan;
 
 	return (
 		<div>
-			<MapPicker
-				selected={selected}
-				setSelected={setSelected}
-				pickerTeamId={pickerTeamId}
-				teams={teams}
-			/>
+			{isModeAction ? (
+				<ModePicker
+					selected={selected}
+					setSelected={setSelected}
+					pickerTeamId={pickerTeamId}
+					teams={teams}
+				/>
+			) : (
+				<MapPicker
+					selected={selected}
+					setSelected={setSelected}
+					pickerTeamId={pickerTeamId}
+					teams={teams}
+				/>
+			)}
 			<CounterpickSubmitter
 				selected={selected}
 				pickingTeam={pickingTeam}
 				pickBan={data.match.roundMaps!.pickBan!}
+				actionType={actionType}
 			/>
 		</div>
 	);
@@ -78,6 +95,7 @@ function MapPicker({
 		tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
 		pickerTeamId,
 		results: data.results,
+		pickBanEvents: data.pickBanEvents,
 	});
 
 	const modes = modesShort.filter((mode) =>
@@ -238,10 +256,77 @@ function MapButton({
 	);
 }
 
+function ModePicker({
+	selected,
+	setSelected,
+	pickerTeamId,
+	teams,
+}: {
+	selected?: { mode: ModeShort; stageId: StageId };
+	setSelected: (selected: { mode: ModeShort; stageId: StageId }) => void;
+	pickerTeamId: number;
+	teams: [TournamentDataTeam, TournamentDataTeam];
+}) {
+	const user = useUser();
+	const data = useLoaderData<TournamentMatchLoaderData>();
+	const tournament = useTournament();
+	const { t } = useTranslation(["game-misc"]);
+
+	const pickBanMapPool = PickBan.mapsListWithLegality({
+		toSetMapPool: tournament.ctx.toSetMapPool,
+		maps: data.match.roundMaps,
+		mapList: data.mapList,
+		teams,
+		tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
+		pickerTeamId,
+		results: data.results,
+		pickBanEvents: data.pickBanEvents,
+	});
+
+	const availableModes = modesShort.filter((mode) =>
+		pickBanMapPool.some((map) => map.mode === mode && map.isLegal),
+	);
+
+	const canPickBan =
+		tournament.isOrganizer(user) ||
+		tournament.ownedTeamByUser(user)?.id === pickerTeamId;
+
+	return (
+		<div className="stack horizontal md justify-center flex-wrap">
+			{availableModes.map((mode) => (
+				<button
+					key={mode}
+					type="button"
+					className={clsx(styles.mapButton, {
+						[styles.mapButtonGreyedOut]: selected?.mode === mode,
+					})}
+					onClick={
+						canPickBan
+							? // CLAUDETODO: why do we have to have this 0 stageId here? a bit hacky
+								() => setSelected({ mode, stageId: 0 as StageId })
+							: undefined
+					}
+					disabled={!canPickBan}
+					data-testid={canPickBan ? "pick-ban-button" : undefined}
+				>
+					<ModeImage mode={mode} size={48} />
+					<div className={styles.mapButtonLabel}>
+						{t(`game-misc:MODE_SHORT_${mode}`)}
+					</div>
+					{selected?.mode === mode ? (
+						<Check className={styles.mapButtonIcon} />
+					) : null}
+				</button>
+			))}
+		</div>
+	);
+}
+
 function CounterpickSubmitter({
 	selected,
 	pickingTeam,
 	pickBan,
+	actionType,
 }: {
 	selected?: {
 		mode: ModeShort;
@@ -249,6 +334,7 @@ function CounterpickSubmitter({
 	};
 	pickingTeam: TournamentDataTeam;
 	pickBan: NonNullable<TournamentRoundMaps["pickBan"]>;
+	actionType: ActionType;
 }) {
 	const fetcher = useFetcher();
 	const { t } = useTranslation(["game-misc"]);
@@ -259,6 +345,28 @@ function CounterpickSubmitter({
 
 	const picking =
 		tournament.isOrganizer(user) || ownedTeam?.id === pickingTeam.id;
+
+	const isModeAction = actionType === "MODE_PICK" || actionType === "MODE_BAN";
+
+	const isCustom = pickBan === "CUSTOM";
+
+	const actionLabel = () => {
+		if (actionType === "BAN" || pickBan === "BAN_2") return "Ban";
+		if (actionType === "MODE_PICK") return "Pick mode";
+		if (actionType === "MODE_BAN") return "Ban mode";
+		if (isCustom) return "Pick";
+		return "Counterpick";
+	};
+
+	const promptLabel = () => {
+		if (actionType === "BAN" || pickBan === "BAN_2") {
+			return "Please select your team's ban above";
+		}
+		if (actionType === "MODE_PICK") return "Please select a mode to pick above";
+		if (actionType === "MODE_BAN") return "Please select a mode to ban above";
+		if (isCustom) return "Please select your team's pick above";
+		return "Please select your team's counterpick above";
+	};
 
 	if (!picking) {
 		return (
@@ -271,9 +379,7 @@ function CounterpickSubmitter({
 	if (picking && !selected) {
 		return (
 			<div className="mt-6 text-lighter text-sm text-center">
-				{pickBan === "BAN_2"
-					? "Please select your team's ban above"
-					: "Please select your team's counterpick above"}
+				{promptLabel()}
 			</div>
 		);
 	}
@@ -284,23 +390,29 @@ function CounterpickSubmitter({
 		<div className="stack md items-center">
 			<div
 				className={clsx("mt-6 text-lighter text-sm", {
-					"text-warning": pickBan === "BAN_2",
+					"text-warning":
+						actionType === "BAN" ||
+						actionType === "MODE_BAN" ||
+						pickBan === "BAN_2",
 				})}
 			>
-				{pickBan === "BAN_2" ? "Ban" : "Counterpick"}:{" "}
-				{t(`game-misc:MODE_SHORT_${selected.mode}`)}{" "}
-				{t(`game-misc:STAGE_${selected.stageId}`)}
+				{actionLabel()}: {t(`game-misc:MODE_SHORT_${selected.mode}`)}
+				{!isModeAction ? ` ${t(`game-misc:STAGE_${selected.stageId}`)}` : null}
 			</div>
 			<div className="stack sm horizontal">
-				<ModeImage mode={selected.mode} size={32} />{" "}
-				<StageImage
-					stageId={selected.stageId}
-					height={32}
-					className="rounded-sm"
-				/>
+				<ModeImage mode={selected.mode} size={32} />
+				{!isModeAction ? (
+					<StageImage
+						stageId={selected.stageId}
+						height={32}
+						className="rounded-sm"
+					/>
+				) : null}
 			</div>
 			<fetcher.Form method="post">
-				<input type="hidden" name="stageId" value={selected.stageId} />
+				{!isModeAction ? (
+					<input type="hidden" name="stageId" value={selected.stageId} />
+				) : null}
 				<input type="hidden" name="mode" value={selected.mode} />
 				<SubmitButton _action="BAN_PICK">Confirm</SubmitButton>
 			</fetcher.Form>

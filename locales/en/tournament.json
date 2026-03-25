@@ -55,6 +55,7 @@
 	"pickInfo.votes_one": "{{count}} vote",
 	"pickInfo.votes_other": "{{count}} votes",
 	"pickInfo.counterpick": "Counterpick",
+	"pickInfo.roll": "Random",
 	"generator.error": "Changes you made weren't saved since the tournament started",
 	"teams.mapsPickedStatus": "Maps picked status",
 	"admin.download": "Download participants",
@@ -174,5 +175,10 @@
 	"customFlow.action.PICK": "Pick (map)",
 	"customFlow.action.BAN": "Ban (map)",
 	"customFlow.action.MODE_PICK": "Pick (mode)",
-	"customFlow.action.MODE_BAN": "Ban (mode)"
+	"customFlow.action.MODE_BAN": "Ban (mode)",
+	"pickBan.counterpick": "Counterpick",
+	"pickBan.pickMap": "Pick a map",
+	"pickBan.banMap": "Ban a map",
+	"pickBan.pickMode": "Pick a mode",
+	"pickBan.banMode": "Ban a mode"
 }

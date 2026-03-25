@@ -55,6 +55,7 @@
 	"pickInfo.votes_one": "",
 	"pickInfo.votes_other": "",
 	"pickInfo.counterpick": "",
+	"pickInfo.roll": "",
 	"generator.error": "",
 	"teams.mapsPickedStatus": "",
 	"admin.download": "",
@@ -174,5 +175,10 @@
 	"customFlow.action.PICK": "",
 	"customFlow.action.BAN": "",
 	"customFlow.action.MODE_PICK": "",
-	"customFlow.action.MODE_BAN": ""
+	"customFlow.action.MODE_BAN": "",
+	"pickBan.counterpick": "",
+	"pickBan.pickMap": "",
+	"pickBan.banMap": "",
+	"pickBan.pickMode": "",
+	"pickBan.banMode": ""
 }

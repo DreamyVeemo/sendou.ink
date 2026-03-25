@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
+import type { TournamentRoundMaps } from "~/db/tables";
 import {
 	CUSTOM_FLOW_VALIDATION_ERRORS,
+	resolveCurrentStep,
+	resolveTeamFromSide,
+	turnOf,
 	validateCustomFlowSection,
 } from "./PickBan";
 
@@ -161,5 +165,304 @@ describe("validateCustomFlowSection", () => {
 		expect(errors).toContain(
 			CUSTOM_FLOW_VALIDATION_ERRORS.LAST_STEP_MUST_BE_PICK_OR_ROLL,
 		);
+	});
+});
+
+describe("resolveCurrentStep", () => {
+	const preSet = [
+		{ action: "BAN" as const, side: "HIGHER_SEED" as const },
+		{ action: "BAN" as const, side: "LOWER_SEED" as const },
+		{ action: "PICK" as const, side: "HIGHER_SEED" as const },
+	];
+	const postGame = [
+		{ action: "BAN" as const, side: "WINNER" as const },
+		{ action: "PICK" as const, side: "LOSER" as const },
+	];
+
+	it("returns preSet steps when eventCount < preSet.length", () => {
+		expect(
+			resolveCurrentStep({ eventCount: 0, preSet, postGame, resultsCount: 0 }),
+		).toEqual(preSet[0]);
+		expect(
+			resolveCurrentStep({ eventCount: 1, preSet, postGame, resultsCount: 0 }),
+		).toEqual(preSet[1]);
+		expect(
+			resolveCurrentStep({ eventCount: 2, preSet, postGame, resultsCount: 0 }),
+		).toEqual(preSet[2]);
+	});
+
+	it("returns null when waiting for game result after preSet", () => {
+		expect(
+			resolveCurrentStep({ eventCount: 3, preSet, postGame, resultsCount: 0 }),
+		).toBeNull();
+	});
+
+	// CLAUDETODO: should we actually throw an error in this case? data input is invalid
+	it("returns null when postGame is empty", () => {
+		expect(
+			resolveCurrentStep({
+				eventCount: 3,
+				preSet,
+				postGame: [],
+				resultsCount: 1,
+			}),
+		).toBeNull();
+	});
+
+	it("returns postGame steps after first game result", () => {
+		expect(
+			resolveCurrentStep({ eventCount: 3, preSet, postGame, resultsCount: 1 }),
+		).toEqual(postGame[0]);
+		expect(
+			resolveCurrentStep({ eventCount: 4, preSet, postGame, resultsCount: 1 }),
+		).toEqual(postGame[1]);
+	});
+
+	it("returns null when waiting for next game result after postGame cycle", () => {
+		expect(
+			resolveCurrentStep({ eventCount: 5, preSet, postGame, resultsCount: 1 }),
+		).toBeNull();
+	});
+
+	it("cycles postGame steps after subsequent results", () => {
+		expect(
+			resolveCurrentStep({ eventCount: 5, preSet, postGame, resultsCount: 2 }),
+		).toEqual(postGame[0]);
+		expect(
+			resolveCurrentStep({ eventCount: 6, preSet, postGame, resultsCount: 2 }),
+		).toEqual(postGame[1]);
+	});
+});
+
+describe("resolveTeamFromSide", () => {
+	const teams: [number, number] = [100, 200];
+
+	it("resolves ALPHA to teams[0]", () => {
+		expect(resolveTeamFromSide({ side: "ALPHA", teams, results: [] })).toBe(
+			100,
+		);
+	});
+
+	it("resolves BRAVO to teams[1]", () => {
+		expect(resolveTeamFromSide({ side: "BRAVO", teams, results: [] })).toBe(
+			200,
+		);
+	});
+
+	it("resolves HIGHER_SEED to teams[1]", () => {
+		expect(
+			resolveTeamFromSide({ side: "HIGHER_SEED", teams, results: [] }),
+		).toBe(200);
+	});
+
+	it("resolves LOWER_SEED to teams[0]", () => {
+		expect(
+			resolveTeamFromSide({ side: "LOWER_SEED", teams, results: [] }),
+		).toBe(100);
+	});
+
+	it("resolves WINNER to last game winner", () => {
+		expect(
+			resolveTeamFromSide({
+				side: "WINNER",
+				teams,
+				results: [{ winnerTeamId: 200 }],
+			}),
+		).toBe(200);
+	});
+
+	it("resolves LOSER to last game loser", () => {
+		expect(
+			resolveTeamFromSide({
+				side: "LOSER",
+				teams,
+				results: [{ winnerTeamId: 200 }],
+			}),
+		).toBe(100);
+	});
+});
+
+describe("turnOf — CUSTOM flow", () => {
+	const customMaps: TournamentRoundMaps = {
+		count: 5,
+		type: "BEST_OF",
+		pickBan: "CUSTOM",
+		customFlow: {
+			preSet: [
+				{ action: "BAN", side: "HIGHER_SEED" },
+				{ action: "BAN", side: "LOWER_SEED" },
+				{ action: "PICK", side: "HIGHER_SEED" },
+			],
+			postGame: [
+				{ action: "BAN", side: "WINNER" },
+				{ action: "PICK", side: "LOSER" },
+			],
+		},
+	};
+	const teams: [number, number] = [100, 200];
+
+	it("returns first preSet step", () => {
+		const result = turnOf({
+			results: [],
+			maps: customMaps,
+			teams,
+			pickBanEventCount: 0,
+		});
+
+		expect(result).toEqual({ teamId: 200, action: "BAN" });
+	});
+
+	it("returns second preSet step", () => {
+		const result = turnOf({
+			results: [],
+			maps: customMaps,
+			teams,
+			pickBanEventCount: 1,
+		});
+
+		expect(result).toEqual({ teamId: 100, action: "BAN" });
+	});
+
+	it("returns null when waiting for game result", () => {
+		const result = turnOf({
+			results: [],
+			maps: customMaps,
+			teams,
+			pickBanEventCount: 3,
+		});
+
+		expect(result).toBeNull();
+	});
+
+	it("returns postGame step after result", () => {
+		const result = turnOf({
+			results: [{ winnerTeamId: 200 }],
+			maps: customMaps,
+			teams,
+			pickBanEventCount: 3,
+		});
+
+		expect(result).toEqual({ teamId: 200, action: "BAN" });
+	});
+
+	it("returns null for ROLL steps", () => {
+		const rollMaps: TournamentRoundMaps = {
+			count: 3,
+			type: "BEST_OF",
+			pickBan: "CUSTOM",
+			customFlow: {
+				preSet: [{ action: "ROLL" }],
+				postGame: [],
+			},
+		};
+
+		const result = turnOf({
+			results: [],
+			maps: rollMaps,
+			teams,
+			pickBanEventCount: 0,
+		});
+
+		expect(result).toBeNull();
+	});
+
+	it("returns null when set is over", () => {
+		const result = turnOf({
+			results: [
+				{ winnerTeamId: 200 },
+				{ winnerTeamId: 200 },
+				{ winnerTeamId: 200 },
+			],
+			maps: customMaps,
+			teams,
+			pickBanEventCount: 7,
+		});
+
+		expect(result).toBeNull();
+	});
+
+	it("returns null when no customFlow defined", () => {
+		const result = turnOf({
+			results: [],
+			maps: { count: 3, type: "BEST_OF", pickBan: "CUSTOM" },
+			teams,
+			pickBanEventCount: 0,
+		});
+
+		expect(result).toBeNull();
+	});
+});
+
+describe("turnOf — BAN_2 flow", () => {
+	const ban2Maps: TournamentRoundMaps = {
+		count: 5,
+		type: "BEST_OF",
+		pickBan: "BAN_2",
+	};
+	const teams: [number, number] = [100, 200];
+
+	it("returns action BAN for first picker", () => {
+		const result = turnOf({
+			results: [],
+			maps: ban2Maps,
+			teams,
+			mapList: [
+				{
+					mode: "SZ",
+					stageId: 1,
+					source: "TO",
+					bannedByTournamentTeamId: undefined,
+				},
+				{
+					mode: "SZ",
+					stageId: 2,
+					source: "TO",
+					bannedByTournamentTeamId: undefined,
+				},
+			],
+		});
+
+		expect(result).toEqual({ teamId: 200, action: "BAN" });
+	});
+
+	it("returns null when both teams have banned", () => {
+		const result = turnOf({
+			results: [],
+			maps: ban2Maps,
+			teams,
+			mapList: [
+				{ mode: "SZ", stageId: 1, source: "TO", bannedByTournamentTeamId: 200 },
+				{ mode: "SZ", stageId: 2, source: "TO", bannedByTournamentTeamId: 100 },
+			],
+		});
+
+		expect(result).toBeNull();
+	});
+});
+
+describe("turnOf — COUNTERPICK flow", () => {
+	const cpMaps: TournamentRoundMaps = {
+		count: 3,
+		type: "BEST_OF",
+		pickBan: "COUNTERPICK",
+	};
+	const teams: [number, number] = [100, 200];
+
+	it("returns action PICK for loser of last game", () => {
+		const result = turnOf({
+			results: [{ winnerTeamId: 200 }],
+			maps: cpMaps,
+			teams,
+			mapList: [
+				{
+					mode: "SZ",
+					stageId: 1,
+					source: "TO",
+					bannedByTournamentTeamId: undefined,
+				},
+			],
+		});
+
+		expect(result).toEqual({ teamId: 100, action: "PICK" });
 	});
 });

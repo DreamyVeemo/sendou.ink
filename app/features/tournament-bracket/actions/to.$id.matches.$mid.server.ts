@@ -9,6 +9,7 @@ import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.se
 import * as TournamentMatchRepository from "~/features/tournament-bracket/TournamentMatchRepository.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
+import { seededRandom } from "~/utils/random";
 import {
 	errorToastIfFalsy,
 	notFoundIfFalsy,
@@ -421,47 +422,121 @@ export const action: ActionFunction = async ({ params, request }) => {
 				match.roundMaps && match.opponentOne?.id && match.opponentTwo?.id,
 				"Missing fields to pick/ban",
 			);
-			const pickerTeamId = PickBan.turnOf({
+
+			const currentPickBanEvents =
+				await TournamentRepository.pickBanEventsByMatchId(match.id);
+
+			const turnOfResult = PickBan.turnOf({
 				results,
 				maps: match.roundMaps,
 				teams: [match.opponentOne.id, match.opponentTwo.id],
 				mapList,
+				pickBanEventCount: currentPickBanEvents.length,
 			});
-			errorToastIfFalsy(pickerTeamId, "Not time to pick/ban");
+			errorToastIfFalsy(turnOfResult, "Not time to pick/ban");
+			const pickerTeamId = turnOfResult.teamId;
+			const actionType = turnOfResult.action;
 			errorToastIfFalsy(
 				tournament.isOrganizer(user) ||
 					tournament.ownedTeamByUser(user)?.id === pickerTeamId,
 				"Unauthorized",
 			);
 
-			errorToastIfFalsy(
-				PickBan.isLegal({
-					results,
-					map: data,
-					maps: match.roundMaps,
-					toSetMapPool:
-						tournament.ctx.mapPickingStyle === "TO"
-							? await TournamentRepository.findTOSetMapPoolById(tournamentId)
-							: [],
-					mapList,
-					tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
-					teams: [teamOne, teamTwo],
-					pickerTeamId,
-				}),
-				"Illegal pick",
-			);
+			const isModeAction =
+				actionType === "MODE_PICK" || actionType === "MODE_BAN";
 
-			const pickBanEvents = await TournamentRepository.pickBanEventsByMatchId(
-				match.id,
-			);
+			if (!isModeAction) {
+				errorToastIfFalsy(data.stageId, "Stage is required for map actions");
+				errorToastIfFalsy(
+					PickBan.isLegal({
+						results,
+						map: { stageId: data.stageId, mode: data.mode },
+						maps: match.roundMaps,
+						toSetMapPool:
+							tournament.ctx.mapPickingStyle === "TO"
+								? await TournamentRepository.findTOSetMapPoolById(tournamentId)
+								: [],
+						mapList,
+						tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
+						teams: [teamOne, teamTwo],
+						pickerTeamId,
+						pickBanEvents: currentPickBanEvents,
+					}),
+					"Illegal pick",
+				);
+			}
+
+			const eventType = (() => {
+				if (match.roundMaps.pickBan === "CUSTOM") return actionType;
+				if (match.roundMaps.pickBan === "BAN_2") return "BAN" as const;
+				return "PICK" as const;
+			})();
+
 			await TournamentRepository.addPickBanEvent({
 				authorId: user.id,
 				matchId: match.id,
-				stageId: data.stageId,
+				stageId: isModeAction ? null : data.stageId!,
 				mode: data.mode,
-				number: pickBanEvents.length + 1,
-				type: match.roundMaps.pickBan === "BAN_2" ? "BAN" : "PICK",
+				number: currentPickBanEvents.length + 1,
+				type: eventType,
+				mapListIndex: null,
 			});
+
+			// Chain rolls after action for CUSTOM flow
+			if (match.roundMaps.pickBan === "CUSTOM" && match.roundMaps.customFlow) {
+				let eventCount = currentPickBanEvents.length + 1;
+				// CLAUDETODO: why is there a loop here? there can only be one roll per step
+				for (;;) {
+					const step = PickBan.resolveCurrentStep({
+						eventCount,
+						preSet: match.roundMaps.customFlow.preSet,
+						postGame: match.roundMaps.customFlow.postGame,
+						resultsCount: results.length,
+					});
+
+					if (!step || step.action !== "ROLL") break;
+
+					const toSetMapPool =
+						await TournamentRepository.findTOSetMapPoolById(tournamentId);
+					const updatedEvents =
+						await TournamentRepository.pickBanEventsByMatchId(match.id);
+					const legalMaps = PickBan.mapsListWithLegality({
+						toSetMapPool,
+						maps: match.roundMaps,
+						mapList: null,
+						teams: [teamOne, teamTwo],
+						tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
+						pickerTeamId: match.opponentOne.id,
+						results,
+						pickBanEvents: updatedEvents,
+					}).filter((m) => m.isLegal);
+
+					// CLAUDETODO: if there are no legal maps, we should consider all maps legal
+					if (legalMaps.length === 0) break;
+
+					const eventNumber = eventCount + 1;
+					const { randomInteger } = seededRandom(
+						`roll-${matchId}-${eventNumber}`,
+					);
+					const selectedMap = legalMaps[randomInteger(legalMaps.length)]!;
+
+					// CLAUDETODO: remove try/catch, not needed
+					try {
+						await TournamentRepository.addPickBanEvent({
+							authorId: null,
+							matchId: match.id,
+							stageId: selectedMap.stageId,
+							mode: selectedMap.mode,
+							number: eventNumber,
+							type: "ROLL",
+							mapListIndex: null,
+						});
+						eventCount++;
+					} catch {
+						break;
+					}
+				}
+			}
 
 			emitMatchUpdate = true;
 

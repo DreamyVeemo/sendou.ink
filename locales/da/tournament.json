@@ -55,6 +55,7 @@
 	"pickInfo.votes_one": "",
 	"pickInfo.votes_other": "",
 	"pickInfo.counterpick": "Modvalg",
+	"pickInfo.roll": "",
 	"generator.error": "Ændringer, som du har lavet, blev ikke gemt, da turneringen nu er begyndt. ",
 	"teams.mapsPickedStatus": "Status for banevalg",
 	"admin.download": "Hent liste over deltagere",
@@ -174,5 +175,10 @@
 	"customFlow.action.PICK": "",
 	"customFlow.action.BAN": "",
 	"customFlow.action.MODE_PICK": "",
-	"customFlow.action.MODE_BAN": ""
+	"customFlow.action.MODE_BAN": "",
+	"pickBan.counterpick": "",
+	"pickBan.pickMap": "",
+	"pickBan.banMap": "",
+	"pickBan.pickMode": "",
+	"pickBan.banMode": ""
 }

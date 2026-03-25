@@ -623,12 +623,13 @@ export interface TournamentMatch {
 
 /** Represents one decision, pick or ban, during tournaments pick/ban (counterpick, ban 2) phase. */
 export interface TournamentMatchPickBanEvent {
-	type: "PICK" | "BAN";
-	stageId: StageId;
-	mode: ModeShort;
+	type: "PICK" | "BAN" | "ROLL" | "MODE_PICK" | "MODE_BAN";
+	stageId: StageId | null;
+	mode: ModeShort | null;
 	matchId: number;
-	authorId: number;
+	authorId: number | null;
 	number: number;
+	mapListIndex: number | null;
 	createdAt: GeneratedAlways<number>;
 }
 

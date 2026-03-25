@@ -9,9 +9,11 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
+import { seededRandom } from "~/utils/random";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { tournamentMatchPage } from "~/utils/urls";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
+import * as PickBan from "../core/PickBan";
 import { tournamentFromDBCached } from "../core/Tournament.server";
 import { findMatchById } from "../queries/findMatchById.server";
 import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
@@ -38,7 +40,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		throw new Response(null, { status: 404 });
 	}
 
-	const pickBanEvents = match.roundMaps?.pickBan
+	let pickBanEvents = match.roundMaps?.pickBan
 		? await TournamentRepository.pickBanEventsByMatchId(match.id)
 		: [];
 
@@ -46,6 +48,29 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const matchIsOver =
 		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
+
+	// Execute pending ROLL steps for CUSTOM flow
+	if (
+		!matchIsOver &&
+		match.roundMaps?.pickBan === "CUSTOM" &&
+		match.roundMaps.customFlow &&
+		match.opponentOne?.id &&
+		match.opponentTwo?.id
+	) {
+		const rollsExecuted = await executeRolls({
+			matchId,
+			match,
+			maps: match.roundMaps,
+			pickBanEvents,
+			results,
+			tournamentId,
+		});
+		if (rollsExecuted) {
+			pickBanEvents = await TournamentRepository.pickBanEventsByMatchId(
+				match.id,
+			);
+		}
+	}
 
 	// cached so that some user changing their noScreen preference doesn't
 	// change the selection once the match has started
@@ -146,5 +171,93 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		endedEarly,
 		noScreen,
 		chatCode: visibleChatCode,
+		pickBanEventCount: pickBanEvents.length,
+		pickBanEvents: pickBanEvents.map((e) => ({
+			type: e.type,
+			stageId: e.stageId,
+			mode: e.mode,
+		})),
 	};
 };
+
+// CLAUDETODO: can we somehow unify the logic with to.$id.matches.$mid.server.ts /actions?
+async function executeRolls({
+	matchId,
+	match,
+	maps,
+	pickBanEvents,
+	results,
+	tournamentId,
+}: {
+	matchId: number;
+	match: NonNullable<ReturnType<typeof findMatchById>>;
+	maps: NonNullable<NonNullable<ReturnType<typeof findMatchById>>["roundMaps"]>;
+	pickBanEvents: Awaited<
+		ReturnType<typeof TournamentRepository.pickBanEventsByMatchId>
+	>;
+	results: ReturnType<typeof findResultsByMatchId>;
+	tournamentId: number;
+}) {
+	const customFlow = maps.customFlow;
+	if (!customFlow) return false;
+
+	let eventCount = pickBanEvents.length;
+	let anyRollExecuted = false;
+
+	// CLAUDETODO: why is the loop needed
+	for (;;) {
+		const step = PickBan.resolveCurrentStep({
+			eventCount,
+			preSet: customFlow.preSet,
+			postGame: customFlow.postGame,
+			resultsCount: results.length,
+		});
+
+		if (!step || step.action !== "ROLL") break;
+
+		const toSetMapPool =
+			await TournamentRepository.findTOSetMapPoolById(tournamentId);
+		const legalMaps = PickBan.mapsListWithLegality({
+			toSetMapPool,
+			maps,
+			mapList: null,
+			teams: [
+				{ id: match.opponentOne!.id! } as Parameters<
+					typeof PickBan.mapsListWithLegality
+				>[0]["teams"][0],
+				{ id: match.opponentTwo!.id! } as Parameters<
+					typeof PickBan.mapsListWithLegality
+				>[0]["teams"][0],
+			],
+			tieBreakerMapPool: [],
+			pickerTeamId: match.opponentOne!.id!,
+			results,
+			pickBanEvents,
+		}).filter((m) => m.isLegal);
+
+		if (legalMaps.length === 0) break;
+
+		const eventNumber = eventCount + 1;
+		const { randomInteger } = seededRandom(`roll-${matchId}-${eventNumber}`);
+		const selectedMap = legalMaps[randomInteger(legalMaps.length)]!;
+
+		try {
+			await TournamentRepository.addPickBanEvent({
+				authorId: null,
+				matchId,
+				stageId: selectedMap.stageId,
+				mode: selectedMap.mode,
+				number: eventNumber,
+				type: "ROLL",
+				mapListIndex: null,
+			});
+			eventCount++;
+			anyRollExecuted = true;
+		} catch {
+			// unique constraint violation — another request already handled this roll
+			break;
+		}
+	}
+
+	return anyRollExecuted;
+}
