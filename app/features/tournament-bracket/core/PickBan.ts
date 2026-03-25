@@ -232,7 +232,10 @@ export function resolveCurrentStep({
 		return preSet[eventCount]!;
 	}
 
-	if (postGame.length === 0) return null;
+	invariant(
+		postGame.length > 0,
+		"resolveCurrentStep: postGame must not be empty",
+	);
 
 	const eventsAfterPreSet = eventCount - preSet.length;
 	const stepInPostGame = eventsAfterPreSet % postGame.length;

@@ -247,16 +247,15 @@ describe("resolveCurrentStep", () => {
 		).toBeNull();
 	});
 
-	// xxx: should we actually throw an error in this case? data input is invalid
-	it("returns null when postGame is empty", () => {
-		expect(
+	it("throws when postGame is empty", () => {
+		expect(() =>
 			resolveCurrentStep({
 				eventCount: 3,
 				preSet,
 				postGame: [],
 				resultsCount: 1,
 			}),
-		).toBeNull();
+		).toThrow();
 	});
 
 	it("returns postGame steps after first game result", () => {
