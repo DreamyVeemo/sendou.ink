@@ -181,7 +181,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	};
 };
 
-// CLAUDETODO: can we somehow unify the logic with to.$id.matches.$mid.server.ts /actions?
+// xxx: can we somehow unify the logic with to.$id.matches.$mid.server.ts /actions?
 async function executeRolls({
 	matchId,
 	match,
@@ -248,7 +248,7 @@ async function executeRolls({
 			mapListIndex: null,
 		});
 	} catch {
-		// CLAUDETODO: check it really is foreign key violation
+		// xxx: check it really is foreign key violation
 		// unique constraint violation — another request already handled this roll
 	}
 

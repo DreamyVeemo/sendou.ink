@@ -318,7 +318,7 @@ function ModePicker({
 					})}
 					onClick={
 						canPickBan
-							? // CLAUDETODO: why do we have to have this 0 stageId here? a bit hacky
+							? // xxx: why do we have to have this 0 stageId here? a bit hacky
 								() => setSelected({ mode, stageId: 0 as StageId })
 							: undefined
 					}

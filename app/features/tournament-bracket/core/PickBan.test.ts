@@ -8,7 +8,7 @@ import {
 	validateCustomFlowSection,
 } from "./PickBan";
 
-// CLAUDETODO: maybe also validate that you can't do Pick (mode) followed by Pick (map) by the same team as that is clearly redundant
+// xxx: maybe also validate that you can't do Pick (mode) followed by Pick (map) by the same team as that is clearly redundant
 describe("validateCustomFlowSection", () => {
 	it("returns no errors for valid preSet steps", () => {
 		const steps = [
@@ -247,7 +247,7 @@ describe("resolveCurrentStep", () => {
 		).toBeNull();
 	});
 
-	// CLAUDETODO: should we actually throw an error in this case? data input is invalid
+	// xxx: should we actually throw an error in this case? data input is invalid
 	it("returns null when postGame is empty", () => {
 		expect(
 			resolveCurrentStep({

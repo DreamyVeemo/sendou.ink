@@ -168,8 +168,6 @@ export function StartedMatch({
 		) : null,
 	];
 
-	// CLAUDETODO: in the pick ban UI, show outline as the "team's" color who did that pick or ban
-
 	return (
 		<div className={styles.duringMatchActions}>
 			<FancyStageBanner

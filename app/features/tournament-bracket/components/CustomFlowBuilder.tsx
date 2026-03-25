@@ -95,7 +95,7 @@ interface PartialStep {
 	side?: WhoSide;
 }
 
-// CLAUDETODO: add Vitest component tests
+// xxx: add Vitest component tests
 export function CustomFlowBuilder({
 	value,
 	onChange,

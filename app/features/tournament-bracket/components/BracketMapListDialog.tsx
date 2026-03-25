@@ -46,7 +46,7 @@ import {
 import styles from "./BracketMapListDialog.module.css";
 import { CustomFlowBuilder } from "./CustomFlowBuilder";
 
-// CLAUDETODO: (pre-existing bug) currently if you select pick/ban or even with custom flow and save maps without selecting any map to contain them, the flow is not saved in the prepared maps. warn on save?
+// xxx: (pre-existing bug) currently if you select pick/ban or even with custom flow and save maps without selecting any map to contain them, the flow is not saved in the prepared maps. warn on save?
 
 export function BracketMapListDialog({
 	close,
@@ -297,7 +297,7 @@ export function BracketMapListDialog({
 			bracket.type === "double_elimination") &&
 		!eliminationTeamCount;
 
-	// CLAUDETODO: we should not be able to submit/save map list if custom flow is wrong!
+	// xxx: we should not be able to submit/save map list if custom flow is wrong!
 	return (
 		<SendouDialog
 			heading={`Maplist selection (${bracket.name})`}

@@ -26,8 +26,8 @@ export { action, loader };
 
 import styles from "../tournament-bracket.module.css";
 
-// CLAUDETODO: RR round 2 is not shown as locked but "Ban by team X" but then the ban section is not rendered
-// CLAUDETODO: Undo map crashes the page
+// xxx: RR round 2 is not shown as locked but "Ban by team X" but then the ban section is not rendered
+// xxx: Undo map crashes the page
 
 export default function TournamentMatchPage() {
 	const user = useUser();
