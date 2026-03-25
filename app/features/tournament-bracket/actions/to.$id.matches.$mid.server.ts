@@ -482,20 +482,17 @@ export const action: ActionFunction = async ({ params, request }) => {
 				mapListIndex: null,
 			});
 
-			// Chain rolls after action for CUSTOM flow
+			// Chain roll after action for CUSTOM flow
 			if (match.roundMaps.pickBan === "CUSTOM" && match.roundMaps.customFlow) {
-				let eventCount = currentPickBanEvents.length + 1;
-				// CLAUDETODO: why is there a loop here? there can only be one roll per step
-				for (;;) {
-					const step = PickBan.resolveCurrentStep({
-						eventCount,
-						preSet: match.roundMaps.customFlow.preSet,
-						postGame: match.roundMaps.customFlow.postGame,
-						resultsCount: results.length,
-					});
+				const eventCount = currentPickBanEvents.length + 1;
+				const step = PickBan.resolveCurrentStep({
+					eventCount,
+					preSet: match.roundMaps.customFlow.preSet,
+					postGame: match.roundMaps.customFlow.postGame,
+					resultsCount: results.length,
+				});
 
-					if (!step || step.action !== "ROLL") break;
-
+				if (step?.action === "ROLL") {
 					const toSetMapPool =
 						await TournamentRepository.findTOSetMapPoolById(tournamentId);
 					const updatedEvents =
@@ -511,8 +508,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 						pickBanEvents: updatedEvents,
 					}).filter((m) => m.isLegal);
 
-					// CLAUDETODO: if there are no legal maps, we should consider all maps legal
-					if (legalMaps.length === 0) break;
+					invariant(legalMaps.length > 0, "Unexpected no legal maps");
 
 					const eventNumber = eventCount + 1;
 					const { randomInteger } = seededRandom(
@@ -520,21 +516,15 @@ export const action: ActionFunction = async ({ params, request }) => {
 					);
 					const selectedMap = legalMaps[randomInteger(legalMaps.length)]!;
 
-					// CLAUDETODO: remove try/catch, not needed
-					try {
-						await TournamentRepository.addPickBanEvent({
-							authorId: null,
-							matchId: match.id,
-							stageId: selectedMap.stageId,
-							mode: selectedMap.mode,
-							number: eventNumber,
-							type: "ROLL",
-							mapListIndex: null,
-						});
-						eventCount++;
-					} catch {
-						break;
-					}
+					await TournamentRepository.addPickBanEvent({
+						authorId: null,
+						matchId: match.id,
+						stageId: selectedMap.stageId,
+						mode: selectedMap.mode,
+						number: eventNumber,
+						type: "ROLL",
+						mapListIndex: null,
+					});
 				}
 			}
 

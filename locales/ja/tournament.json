@@ -161,6 +161,7 @@
 	"customFlow.validation.lastStepMustBePickOrRoll": "",
 	"customFlow.validation.winnerLoserInPreSet": "",
 	"customFlow.validation.tooManyModePicks": "",
+	"customFlow.validation.tooManyMapPicks": "",
 	"customFlow.who.ALPHA": "",
 	"customFlow.who.BRAVO": "",
 	"customFlow.who.HIGHER_SEED": "",

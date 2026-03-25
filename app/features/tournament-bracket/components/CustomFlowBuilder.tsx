@@ -84,6 +84,8 @@ function validationErrorToI18nKey(error: CustomFlowValidationError) {
 			return "tournament:customFlow.validation.winnerLoserInPreSet" as const;
 		case "TOO_MANY_MODE_PICKS":
 			return "tournament:customFlow.validation.tooManyModePicks" as const;
+		case "TOO_MANY_MAP_PICKS":
+			return "tournament:customFlow.validation.tooManyMapPicks" as const;
 	}
 }
 

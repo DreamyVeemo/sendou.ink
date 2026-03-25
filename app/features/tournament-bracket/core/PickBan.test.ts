@@ -130,6 +130,56 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
+	it("returns TOO_MANY_MAP_PICKS when section has PICK and ROLL", () => {
+		const steps = [
+			{ action: "BAN" as const, side: "ALPHA" as const },
+			{ action: "PICK" as const, side: "BRAVO" as const },
+			{ action: "ROLL" as const },
+		];
+
+		expect(validateCustomFlowSection(steps, "preSet")).toContain(
+			CUSTOM_FLOW_VALIDATION_ERRORS.TOO_MANY_MAP_PICKS,
+		);
+	});
+
+	it("returns TOO_MANY_MAP_PICKS when section has two ROLLs", () => {
+		const steps = [{ action: "ROLL" as const }, { action: "ROLL" as const }];
+
+		expect(validateCustomFlowSection(steps, "preSet")).toContain(
+			CUSTOM_FLOW_VALIDATION_ERRORS.TOO_MANY_MAP_PICKS,
+		);
+	});
+
+	it("returns TOO_MANY_MAP_PICKS when section has two PICKs", () => {
+		const steps = [
+			{ action: "PICK" as const, side: "ALPHA" as const },
+			{ action: "MODE_BAN" as const, side: "BRAVO" as const },
+			{ action: "PICK" as const, side: "BRAVO" as const },
+		];
+
+		expect(validateCustomFlowSection(steps, "preSet")).toContain(
+			CUSTOM_FLOW_VALIDATION_ERRORS.TOO_MANY_MAP_PICKS,
+		);
+	});
+
+	it("allows exactly one PICK or ROLL", () => {
+		const stepsWithPick = [
+			{ action: "BAN" as const, side: "ALPHA" as const },
+			{ action: "PICK" as const, side: "BRAVO" as const },
+		];
+		const stepsWithRoll = [
+			{ action: "BAN" as const, side: "ALPHA" as const },
+			{ action: "ROLL" as const },
+		];
+
+		expect(validateCustomFlowSection(stepsWithPick, "preSet")).not.toContain(
+			CUSTOM_FLOW_VALIDATION_ERRORS.TOO_MANY_MAP_PICKS,
+		);
+		expect(validateCustomFlowSection(stepsWithRoll, "preSet")).not.toContain(
+			CUSTOM_FLOW_VALIDATION_ERRORS.TOO_MANY_MAP_PICKS,
+		);
+	});
+
 	it("allows exactly one MODE_PICK", () => {
 		const steps = [
 			{ action: "MODE_PICK" as const, side: "ALPHA" as const },

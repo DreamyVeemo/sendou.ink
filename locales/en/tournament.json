@@ -165,6 +165,7 @@
 	"customFlow.validation.lastStepMustBePickOrRoll": "Last step must be Pick or Roll (to determine the map)",
 	"customFlow.validation.winnerLoserInPreSet": "Winner/Loser cannot be used in Before set steps",
 	"customFlow.validation.tooManyModePicks": "At most one Mode Pick per section",
+	"customFlow.validation.tooManyMapPicks": "At most one Pick or Roll per section",
 	"customFlow.who.ALPHA": "Team Alpha",
 	"customFlow.who.BRAVO": "Team Bravo",
 	"customFlow.who.HIGHER_SEED": "Higher Seed",

@@ -425,6 +425,7 @@ export const CUSTOM_FLOW_VALIDATION_ERRORS = {
 	LAST_STEP_MUST_BE_PICK_OR_ROLL: "LAST_STEP_MUST_BE_PICK_OR_ROLL",
 	WINNER_LOSER_IN_PRE_SET: "WINNER_LOSER_IN_PRE_SET",
 	TOO_MANY_MODE_PICKS: "TOO_MANY_MODE_PICKS",
+	TOO_MANY_MAP_PICKS: "TOO_MANY_MAP_PICKS",
 } as const;
 export type CustomFlowValidationError =
 	(typeof CUSTOM_FLOW_VALIDATION_ERRORS)[keyof typeof CUSTOM_FLOW_VALIDATION_ERRORS];
@@ -473,6 +474,13 @@ export function validateCustomFlowSection(
 	const modePickCount = steps.filter((s) => s.action === "MODE_PICK").length;
 	if (modePickCount > 1) {
 		errors.push(CUSTOM_FLOW_VALIDATION_ERRORS.TOO_MANY_MODE_PICKS);
+	}
+
+	const mapPickCount = steps.filter(
+		(s) => s.action === "PICK" || s.action === "ROLL",
+	).length;
+	if (mapPickCount > 1) {
+		errors.push(CUSTOM_FLOW_VALIDATION_ERRORS.TOO_MANY_MAP_PICKS);
 	}
 
 	return errors;

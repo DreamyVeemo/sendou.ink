@@ -8,6 +8,7 @@ import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamR
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
+import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { seededRandom } from "~/utils/random";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
@@ -201,63 +202,55 @@ async function executeRolls({
 	const customFlow = maps.customFlow;
 	if (!customFlow) return false;
 
-	let eventCount = pickBanEvents.length;
-	let anyRollExecuted = false;
+	const step = PickBan.resolveCurrentStep({
+		eventCount: pickBanEvents.length,
+		preSet: customFlow.preSet,
+		postGame: customFlow.postGame,
+		resultsCount: results.length,
+	});
 
-	// CLAUDETODO: why is the loop needed
-	for (;;) {
-		const step = PickBan.resolveCurrentStep({
-			eventCount,
-			preSet: customFlow.preSet,
-			postGame: customFlow.postGame,
-			resultsCount: results.length,
+	if (!step || step.action !== "ROLL") return false;
+
+	const toSetMapPool =
+		await TournamentRepository.findTOSetMapPoolById(tournamentId);
+	const legalMaps = PickBan.mapsListWithLegality({
+		toSetMapPool,
+		maps,
+		mapList: null,
+		teams: [
+			{ id: match.opponentOne!.id! } as Parameters<
+				typeof PickBan.mapsListWithLegality
+			>[0]["teams"][0],
+			{ id: match.opponentTwo!.id! } as Parameters<
+				typeof PickBan.mapsListWithLegality
+			>[0]["teams"][0],
+		],
+		tieBreakerMapPool: [],
+		pickerTeamId: match.opponentOne!.id!,
+		results,
+		pickBanEvents,
+	}).filter((m) => m.isLegal);
+
+	invariant(legalMaps.length > 0, "Unexpected no legal maps");
+
+	const eventNumber = pickBanEvents.length + 1;
+	const { randomInteger } = seededRandom(`roll-${matchId}-${eventNumber}`);
+	const selectedMap = legalMaps[randomInteger(legalMaps.length)]!;
+
+	try {
+		await TournamentRepository.addPickBanEvent({
+			authorId: null,
+			matchId,
+			stageId: selectedMap.stageId,
+			mode: selectedMap.mode,
+			number: eventNumber,
+			type: "ROLL",
+			mapListIndex: null,
 		});
-
-		if (!step || step.action !== "ROLL") break;
-
-		const toSetMapPool =
-			await TournamentRepository.findTOSetMapPoolById(tournamentId);
-		const legalMaps = PickBan.mapsListWithLegality({
-			toSetMapPool,
-			maps,
-			mapList: null,
-			teams: [
-				{ id: match.opponentOne!.id! } as Parameters<
-					typeof PickBan.mapsListWithLegality
-				>[0]["teams"][0],
-				{ id: match.opponentTwo!.id! } as Parameters<
-					typeof PickBan.mapsListWithLegality
-				>[0]["teams"][0],
-			],
-			tieBreakerMapPool: [],
-			pickerTeamId: match.opponentOne!.id!,
-			results,
-			pickBanEvents,
-		}).filter((m) => m.isLegal);
-
-		if (legalMaps.length === 0) break;
-
-		const eventNumber = eventCount + 1;
-		const { randomInteger } = seededRandom(`roll-${matchId}-${eventNumber}`);
-		const selectedMap = legalMaps[randomInteger(legalMaps.length)]!;
-
-		try {
-			await TournamentRepository.addPickBanEvent({
-				authorId: null,
-				matchId,
-				stageId: selectedMap.stageId,
-				mode: selectedMap.mode,
-				number: eventNumber,
-				type: "ROLL",
-				mapListIndex: null,
-			});
-			eventCount++;
-			anyRollExecuted = true;
-		} catch {
-			// unique constraint violation — another request already handled this roll
-			break;
-		}
+	} catch {
+		// CLAUDETODO: check it really is foreign key violation
+		// unique constraint violation — another request already handled this roll
 	}
 
-	return anyRollExecuted;
+	return true;
 }
