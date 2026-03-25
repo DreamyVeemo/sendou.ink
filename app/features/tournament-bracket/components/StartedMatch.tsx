@@ -265,8 +265,6 @@ export function StartedMatch({
 	);
 }
 
-// CLAUDETODO: when we have two bans in a row the state doesn't get cleared so there is a visual bug: a map shows both selected and banned at the same time
-// CLAUDETODO: lets make distinction between selected and already banned. maybe e.g. for banning show the cross in a different color (grey?) and then red only when it's banned and can no longer be changed.
 function FancyStageBanner({
 	stage,
 	infos,

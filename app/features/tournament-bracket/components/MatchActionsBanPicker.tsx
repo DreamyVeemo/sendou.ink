@@ -60,6 +60,7 @@ export function MatchActionsBanPicker({
 					setSelected={setSelected}
 					pickerTeamId={pickerTeamId}
 					teams={teams}
+					actionType={actionType}
 				/>
 			)}
 			<CounterpickSubmitter
@@ -77,11 +78,13 @@ function MapPicker({
 	setSelected,
 	pickerTeamId,
 	teams,
+	actionType,
 }: {
 	selected?: { mode: ModeShort; stageId: StageId };
 	setSelected: (selected: { mode: ModeShort; stageId: StageId }) => void;
 	pickerTeamId: number;
 	teams: [TournamentDataTeam, TournamentDataTeam];
+	actionType: ActionType;
 }) {
 	const user = useUser();
 	const data = useLoaderData<TournamentMatchLoaderData>();
@@ -177,6 +180,7 @@ function MapPicker({
 										selected={
 											selected?.mode === mode && selected.stageId === stageId
 										}
+										actionType={actionType}
 										onClick={
 											canPickBan
 												? () => setSelected({ mode, stageId })
@@ -205,6 +209,7 @@ function MapButton({
 	onClick,
 	selected,
 	disabled,
+	actionType,
 	number,
 	from,
 }: {
@@ -212,6 +217,7 @@ function MapButton({
 	onClick?: () => void;
 	selected?: boolean;
 	disabled?: boolean;
+	actionType?: ActionType;
 	number?: number;
 	from?: "US" | "THEM" | "BOTH";
 }) {
@@ -231,8 +237,18 @@ function MapButton({
 				disabled={!onClick}
 				data-testid={!disabled && onClick ? "pick-ban-button" : undefined}
 			/>
-			{selected ? (
-				<Check className={styles.mapButtonIcon} onClick={onClick} />
+			{selected && !disabled ? (
+				actionType === "BAN" || actionType === "MODE_BAN" ? (
+					<X
+						className={clsx(styles.mapButtonIcon, styles.mapButtonIconMuted)}
+						onClick={onClick}
+					/>
+				) : (
+					<Check
+						className={clsx(styles.mapButtonIcon, styles.mapButtonIconMuted)}
+						onClick={onClick}
+					/>
+				)
 			) : null}
 			{disabled ? (
 				<X className={clsx(styles.mapButtonIcon, styles.mapButtonIconError)} />

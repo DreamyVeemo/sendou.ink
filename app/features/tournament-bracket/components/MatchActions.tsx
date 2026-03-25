@@ -119,7 +119,10 @@ export function MatchActions({
 
 	if (turnOf) {
 		return (
-			<MatchActionsBanPicker key={turnOf.teamId} teams={[teams[0], teams[1]]} />
+			<MatchActionsBanPicker
+				key={`${turnOf.teamId}-${data.pickBanEventCount}`}
+				teams={[teams[0], teams[1]]}
+			/>
 		);
 	}
 
