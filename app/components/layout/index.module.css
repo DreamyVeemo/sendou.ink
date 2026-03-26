@@ -269,3 +269,9 @@
 	outline: none;
 	height: 100%;
 }
+
+@media screen and (min-width: 1475px) {
+	:global(html[data-fuse="true"]) .chatSidebar {
+		z-index: 20;
+	}
+}
