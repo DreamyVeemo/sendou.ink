@@ -338,6 +338,7 @@ export async function findChildTournaments(parentTournamentId: number) {
 				.selectFrom("TournamentTeam")
 				.select(({ fn }) => [fn.countAll<number>().as("teamsCount")])
 				.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+				.where("TournamentTeam.isPlaceholder", "=", 0)
 				.as("teamsCount"),
 			jsonArrayFrom(
 				eb
@@ -348,7 +349,8 @@ export async function findChildTournaments(parentTournamentId: number) {
 						"TournamentTeam.id",
 					)
 					.select(["TournamentTeamMember.userId"])
-					.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id"),
+					.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+					.where("TournamentTeam.isPlaceholder", "=", 0),
 			).as("teamMembers"),
 		])
 		.where("Tournament.parentTournamentId", "=", parentTournamentId)
