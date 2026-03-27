@@ -470,12 +470,22 @@ function SiteTitle() {
 
 				{hasBreadcrumbs ? (
 					<>
-						{breadcrumbs.map((crumb) => (
-							<React.Fragment key={crumb.href}>
-								<span className={styles.separator}>/</span>
-								<PageIcon crumb={crumb} />
-							</React.Fragment>
-						))}
+						{breadcrumbs.map((crumb) => {
+							const isCurrentPage = location.pathname === crumb.href;
+
+							return (
+								<React.Fragment key={crumb.href}>
+									<span className={styles.separator}>/</span>
+									{isCurrentPage ? (
+										<PageIcon crumb={crumb} />
+									) : (
+										<Link to={crumb.href} className={styles.breadcrumbLink}>
+											<PageIcon crumb={crumb} />
+										</Link>
+									)}
+								</React.Fragment>
+							);
+						})}
 
 						{currentPageText ? (
 							<span className={styles.pageName}>{currentPageText}</span>
