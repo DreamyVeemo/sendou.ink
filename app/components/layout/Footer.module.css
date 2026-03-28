@@ -20,6 +20,11 @@
 	gap: var(--s-2);
 }
 
+.socialIcon {
+	height: 2.25rem;
+	transition: transform 0.25s ease-in-out;
+}
+
 .socialLink {
 	display: flex;
 	max-width: 10rem;
@@ -33,23 +38,18 @@
 	background-color: var(--color-bg-higher);
 	cursor: pointer;
 	font-size: var(--font-lg);
-}
 
-.socialIcon {
-	height: 2.25rem;
-	transition: transform 0.25s ease-in-out;
-}
-
-.socialLink:hover > .socialIcon {
-	transform: translateY(-0.3rem);
+	&:hover > .socialIcon {
+		transform: translateY(-0.3rem);
+	}
 }
 
 .socialHeader {
 	text-align: center;
-}
 
-.socialHeader > p {
-	font-size: var(--font-2xs);
+	& > p {
+		font-size: var(--font-2xs);
+	}
 }
 
 .patronTitle {
@@ -98,6 +98,10 @@
 	.socialLink {
 		max-width: initial;
 		flex-direction: row;
+
+		&:hover > .socialIcon {
+			transform: translateX(-0.3rem);
+		}
 	}
 
 	.socialHeader {
@@ -105,17 +109,13 @@
 		align-items: center;
 		gap: var(--s-2);
 		text-align: initial;
-	}
 
-	.socialHeader > p {
-		margin-block-start: var(--s-1);
+		& > p {
+			margin-block-start: var(--s-1);
+		}
 	}
 
 	.socialIcon {
 		height: 1.75rem;
-	}
-
-	.socialLink:hover > .socialIcon {
-		transform: translateX(-0.3rem);
 	}
 }
