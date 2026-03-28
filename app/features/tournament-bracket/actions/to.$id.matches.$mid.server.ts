@@ -541,6 +541,11 @@ export const action: ActionFunction = async ({ params, request }) => {
 				tournament.isOrganizerOrStreamer(user),
 				"Not an organizer or streamer",
 			);
+			errorToastIfFalsy(
+				data.twitchAccount === null ||
+					tournament.ctx.castTwitchAccounts?.includes(data.twitchAccount),
+				"Invalid Twitch account",
+			);
 
 			await TournamentRepository.setMatchAsCasted({
 				matchId: match.id,
@@ -557,6 +562,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 				tournament.isOrganizerOrStreamer(user),
 				"Not an organizer or streamer",
 			);
+			errorToastIfFalsy(
+				tournament.ctx.castTwitchAccounts?.includes(data.twitchAccount),
+				"Invalid Twitch account",
+			);
 
 			// can't lock if match status is not Locked or Waiting (team(s) busy with previous match), let's update their view to reflect that
 			if (
@@ -569,6 +578,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			await TournamentRepository.lockMatch({
 				matchId: match.id,
 				tournamentId: tournament.ctx.id,
+				twitchAccount: data.twitchAccount,
 			});
 
 			emitMatchUpdate = true;

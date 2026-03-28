@@ -518,8 +518,8 @@ export interface TournamentSettings {
 }
 
 export interface CastedMatchesInfo {
-	/** Array for match ID's that are locked because they are pending to be casted */
-	lockedMatches: number[];
+	/** Array for matches that are locked because they are pending to be casted */
+	lockedMatches: Array<{ twitchAccount: string; matchId: number }>;
 	/** What matches are streamed currently & where */
 	castedMatches: { twitchAccount: string; matchId: number }[];
 }

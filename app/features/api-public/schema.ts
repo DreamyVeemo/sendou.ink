@@ -274,7 +274,7 @@ export interface GetCastedTournamentMatchesResponse {
 	 */
 	future: Array<{
 		matchId: number;
-		channel: TournamentCastChannel | null;
+		channel: TournamentCastChannel;
 	}>;
 }
 
