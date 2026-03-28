@@ -1064,6 +1064,13 @@ export interface LiveStream {
 	twitch: string | null;
 }
 
+export interface TournamentStreamer {
+	id: GeneratedAlways<number>;
+	userId: number | null;
+	tournamentId: number;
+	twitchAccount: string;
+}
+
 export interface BanLog {
 	id: GeneratedAlways<number>;
 	userId: number;
@@ -1314,6 +1321,7 @@ export interface DB {
 	TournamentOrganizationSeries: TournamentOrganizationSeries;
 	TournamentBracketProgressionOverride: TournamentBracketProgressionOverride;
 	TournamentOrganizationBannedUser: TournamentOrganizationBannedUser;
+	TournamentStreamer: TournamentStreamer;
 	TrustRelationship: TrustRelationship;
 	Friendship: Friendship;
 	FriendRequest: FriendRequest;
