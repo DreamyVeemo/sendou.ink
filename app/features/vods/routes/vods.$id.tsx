@@ -11,7 +11,7 @@ import { Image, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { YouTubeEmbed } from "~/components/YouTubeEmbed";
 import { useUser } from "~/features/auth/core/user";
-import { useIsMounted } from "~/hooks/useIsMounted";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
@@ -80,7 +80,7 @@ export default function VodPage() {
 		defaultValue: 0,
 		revive: Number,
 	});
-	const isMounted = useIsMounted();
+	const isHydrated = useHydrated();
 	const [autoplay, setAutoplay] = React.useState(false);
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["common", "vods"]);
@@ -102,10 +102,10 @@ export default function VodPage() {
 						<PovUser pov={data.vod.pov} />
 						<time
 							className={clsx("text-lighter text-xs", {
-								invisible: !isMounted,
+								invisible: !isHydrated,
 							})}
 						>
-							{isMounted
+							{isHydrated
 								? formatDate(databaseTimestampToDate(data.vod.youtubeDate), {
 										day: "numeric",
 										month: "numeric",
