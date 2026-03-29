@@ -21,6 +21,11 @@ const devOnlyRoutes =
 					"/comp-analyzer/all-ranges",
 					"features/comp-analyzer/routes/comp-analyzer.all-ranges.tsx",
 				),
+				route(
+					"/bracket-test",
+					"features/bracket-test/routes/bracket-test.tsx",
+					[index("features/bracket-test/routes/bracket-test.index.tsx")],
+				),
 			] satisfies RouteConfig)
 		: [];
 
