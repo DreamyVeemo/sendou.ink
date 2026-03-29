@@ -334,7 +334,7 @@ export default function Planner() {
 // Formats the style panel so it can have classnames, this is needed so it can be moved below the header bar which blocks clicks (idk why this is different to the old version)
 function CustomStylePanel(props: TLUiStylePanelProps) {
 	return (
-		<div className={styles.stylePanel}>
+		<div className={props.isMobile ? undefined : styles.stylePanel}>
 			<DefaultStylePanel {...props} />
 		</div>
 	);
