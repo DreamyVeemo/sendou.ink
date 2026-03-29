@@ -28,7 +28,6 @@
 	align-items: center;
 	padding-inline: var(--s-2);
 	flex-shrink: 0;
-	overflow: hidden;
 }
 
 .sideNavTopCentered {
