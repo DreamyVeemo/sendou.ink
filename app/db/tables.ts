@@ -623,11 +623,11 @@ export interface TournamentMatch {
 
 /** Represents one decision, pick or ban, during tournaments pick/ban (counterpick, ban 2) phase. */
 export interface TournamentMatchPickBanEvent {
-	type: "PICK" | "BAN";
-	stageId: StageId;
-	mode: ModeShort;
+	type: "PICK" | "BAN" | "ROLL" | "MODE_PICK" | "MODE_BAN";
+	stageId: StageId | null;
+	mode: ModeShort | null;
 	matchId: number;
-	authorId: number;
+	authorId: number | null;
 	number: number;
 	createdAt: GeneratedAlways<number>;
 }
@@ -677,6 +677,36 @@ export interface TournamentRoundMaps {
 	count: number;
 	type: "BEST_OF" | "PLAY_ALL";
 	pickBan?: PickBan.Type | null;
+	customFlow?: CustomPickBanFlow | null;
+}
+
+export const WHO_SIDES = [
+	"ALPHA",
+	"BRAVO",
+	"HIGHER_SEED",
+	"LOWER_SEED",
+	"WINNER",
+	"LOSER",
+] as const;
+export type WhoSide = (typeof WHO_SIDES)[number];
+
+export const ACTION_TYPES = [
+	"ROLL",
+	"PICK",
+	"BAN",
+	"MODE_PICK",
+	"MODE_BAN",
+] as const;
+export type ActionType = (typeof ACTION_TYPES)[number];
+
+export interface CustomPickBanStep {
+	action: ActionType;
+	side?: WhoSide;
+}
+
+export interface CustomPickBanFlow {
+	preSet: CustomPickBanStep[];
+	postGame: CustomPickBanStep[];
 }
 
 /**

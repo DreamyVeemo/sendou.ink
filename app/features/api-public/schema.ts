@@ -488,8 +488,16 @@ export type MapListMap = {
 	 * - "BOTH" both teams picked the map
 	 * - "TO" if it was a TO pick (from predefined maplist)
 	 * - "COUNTERPICK" if it was a counterpick
+	 * - "ROLL" if it was randomly selected
 	 */
-	source: number | "DEFAULT" | "TIEBREAKER" | "BOTH" | "TO" | "COUNTERPICK";
+	source:
+		| number
+		| "DEFAULT"
+		| "TIEBREAKER"
+		| "BOTH"
+		| "TO"
+		| "COUNTERPICK"
+		| "ROLL";
 	winnerTeamId: number | null;
 	participatedUserIds: Array<number> | null;
 	/** (round robin only) points of the match used for tiebreaker purposes. e.g. [100, 0] indicates a knockout. */

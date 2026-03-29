@@ -107,22 +107,31 @@ export function MatchActions({
 		[tournament, data.match.id],
 	);
 
+	const bothTeamsHaveActiveRosters = teams.every((team) =>
+		tournamentTeamToActiveRosterUserIds(team, tournament.minMembersPerTeam),
+	);
+
 	const turnOf =
 		data.match.roundMaps &&
 		PickBan.turnOf({
 			results: data.results,
 			maps: data.match.roundMaps,
-			teams: [teams[0].id, teams[1].id],
+			teams: [
+				{ id: teams[0].id, seed: tournament.teamById(teams[0].id)!.seed },
+				{ id: teams[1].id, seed: tournament.teamById(teams[1].id)!.seed },
+			],
 			mapList: data.mapList,
+			pickBanEventCount: data.pickBanEventCount,
 		});
 
-	if (turnOf) {
-		return <MatchActionsBanPicker key={turnOf} teams={[teams[0], teams[1]]} />;
+	if (turnOf && bothTeamsHaveActiveRosters) {
+		return (
+			<MatchActionsBanPicker
+				key={`${turnOf.teamId}-${data.pickBanEventCount}`}
+				teams={[teams[0], teams[1]]}
+			/>
+		);
 	}
-
-	const bothTeamsHaveActiveRosters = teams.every((team) =>
-		tournamentTeamToActiveRosterUserIds(team, tournament.minMembersPerTeam),
-	);
 
 	const canEditFinishedSet =
 		result && tournament.isOrganizer(user) && !tournament.ctx.isFinalized;

@@ -51,6 +51,10 @@
 	color: var(--color-error);
 }
 
+.mapButtonIconMuted {
+	color: var(--color-text-high);
+}
+
 .mapButtonNumber {
 	position: absolute;
 	background-color: var(--color-text-accent);

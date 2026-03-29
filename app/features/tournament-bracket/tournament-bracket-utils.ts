@@ -128,6 +128,9 @@ export function pickInfoText({
 	if (map.source === "COUNTERPICK") {
 		return t("tournament:pickInfo.counterpick");
 	}
+	if (map.source === "ROLL") {
+		return t("tournament:pickInfo.roll");
+	}
 	if (map.source === "TO") return "";
 
 	logger.error(`Unknown source: ${String(map.source)}`);
