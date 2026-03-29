@@ -20,29 +20,38 @@ const MATCH_SPACING = MATCH_HEIGHT + GAP;
 export function EliminationBracketSide(props: EliminationBracketSideProps) {
 	const rounds = getRounds({ ...props, bracketData: props.bracket.data });
 
-	const firstRoundMatches = props.bracket.data.match.filter(
-		(match) => match.round_id === rounds[0]?.id,
-	);
-	const firstRoundHasOngoing = firstRoundMatches.some(
-		(match) =>
-			match.opponent1 &&
-			match.opponent2 &&
-			match.opponent1.result !== "win" &&
-			match.opponent2.result !== "win",
-	);
-	const firstRoundHidden =
-		!props.isExpanded && rounds.length > 2 && !firstRoundHasOngoing;
+	const hiddenRoundIds = new Set(
+		rounds
+			.filter((round, roundIdx) => {
+				if (props.isExpanded) return false;
+				if (roundIdx >= rounds.length - 2) return false;
 
-	const firstVisibleRoundId = firstRoundHidden ? rounds[1]?.id : rounds[0]?.id;
+				const roundMatches = props.bracket.data.match.filter(
+					(match) => match.round_id === round.id,
+				);
+				return !roundMatches.some(
+					(match) =>
+						match.opponent1 &&
+						match.opponent2 &&
+						match.opponent1.result !== "win" &&
+						match.opponent2.result !== "win",
+				);
+			})
+			.map((round) => round.id),
+	);
+
+	const firstVisibleRound = rounds.find(
+		(round) => !hiddenRoundIds.has(round.id),
+	);
 	const firstVisibleRoundMatchCount = props.bracket.data.match.filter(
-		(match) => match.round_id === firstVisibleRoundId,
+		(match) => match.round_id === firstVisibleRound?.id,
 	).length;
 
 	let atLeastOneColumnHidden = false;
 	return (
 		<div
 			className={styles.elimContainer}
-			style={{ "--round-count": rounds.length }}
+			style={{ "--round-count": rounds.length - hiddenRoundIds.size }}
 		>
 			{rounds.flatMap((round, roundIdx) => {
 				const bestOf = round.maps?.count;
@@ -67,12 +76,7 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 						match.opponent2.result !== "win",
 				);
 
-				if (
-					!props.isExpanded &&
-					// always show at least 2 rounds per side
-					roundIdx < rounds.length - 2 &&
-					!someMatchOngoing
-				) {
+				if (hiddenRoundIds.has(round.id)) {
 					atLeastOneColumnHidden = true;
 					return null;
 				}
