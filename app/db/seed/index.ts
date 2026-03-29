@@ -2729,7 +2729,7 @@ async function notifications() {
 		{
 			type: "TO_CHECK_IN_OPENED",
 			meta: { tournamentId: 1, tournamentName: "PICNIC #2" },
-			pictureUrl: "/static-assets/img/tournament-logos/pn.png",
+			pictureUrl: "/static-assets/img/tournament-logos/pn.avif",
 		},
 	];
 

@@ -151,7 +151,7 @@ function MapButton({
 					[styles.mapButtonWiggle]: wiggle,
 					[styles.mapButtonGreyedOut]: selected || banned || tiebreaker,
 				})}
-				style={{ "--map-image-url": `url("${stageImageUrl(stageId)}.png")` }}
+				style={{ "--map-image-url": `url("${stageImageUrl(stageId)}.avif")` }}
 				onClick={onClick}
 				disabled={banned}
 				type="button"

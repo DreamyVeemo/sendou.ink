@@ -375,7 +375,7 @@ export function tournamentToSidebarEvent(
 	};
 }
 
-const SCRIMS_ICON_URL = `${navIconUrl("scrims")}.png`;
+const SCRIMS_ICON_URL = `${navIconUrl("scrims")}.avif`;
 
 export function scrimToSidebarEvent(s: SidebarScrim): SidebarEvent {
 	return {

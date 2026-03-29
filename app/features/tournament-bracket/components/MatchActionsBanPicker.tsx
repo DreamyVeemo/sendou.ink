@@ -208,7 +208,7 @@ function MapButton({
 				className={clsx(styles.mapButton, {
 					[styles.mapButtonGreyedOut]: selected || disabled,
 				})}
-				style={{ "--map-image-url": `url("${stageImageUrl(stageId)}.png")` }}
+				style={{ "--map-image-url": `url("${stageImageUrl(stageId)}.avif")` }}
 				onClick={onClick}
 				type="button"
 				disabled={!onClick}

@@ -288,7 +288,7 @@ function FancyStageBanner({
 	const gamesCompleted = data.results.length;
 
 	const stageNameToBannerImageUrl = (stageId: StageId) => {
-		return `${stageImageUrl(stageId)}.png`;
+		return `${stageImageUrl(stageId)}.avif`;
 	};
 
 	const banPickingTeam = () => {

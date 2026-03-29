@@ -152,7 +152,7 @@ export interface GetTournamentResponse {
 	 */
 	url: string;
 	/**
-	 * @example "https://sendou.ink/static-assets/img/tournament-logos/itz.png"
+	 * @example "https://sendou.ink/static-assets/img/tournament-logos/itz.avif"
 	 */
 	logoUrl: string | null;
 	/**
@@ -458,7 +458,7 @@ type Badge = {
 	name: string;
 	count: number;
 	/**
-	 * @example "https://sendou.ink/static-assets/badges/monday.png"
+	 * @example "https://sendou.ink/static-assets/badges/monday.avif"
 	 */
 	imageUrl: string;
 	/**

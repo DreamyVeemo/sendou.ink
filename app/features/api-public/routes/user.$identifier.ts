@@ -117,7 +117,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			name: badge.displayName,
 			count: badge.count,
 			gifUrl: `https://sendou.ink/static-assets/badges/${badge.code}.gif`,
-			imageUrl: `https://sendou.ink/static-assets/badges/${badge.code}.png`,
+			imageUrl: `https://sendou.ink/static-assets/badges/${badge.code}.avif`,
 		})),
 		teams: user.teams.map((team) => ({
 			id: team.id,
