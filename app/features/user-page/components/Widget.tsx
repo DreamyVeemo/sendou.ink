@@ -3,6 +3,7 @@ import { Link2 as LinkIcon } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { Avatar } from "~/components/Avatar";
 import { BuildCard } from "~/components/BuildCard";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -12,11 +13,13 @@ import { DiscordIcon } from "~/components/icons/Discord";
 import { TwitchIcon } from "~/components/icons/Twitch";
 import { YouTubeIcon } from "~/components/icons/YouTube";
 import { Markdown } from "~/components/Markdown";
+import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
 import type { Tables } from "~/db/tables";
 import { previewUrl } from "~/features/art/art-utils";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { VodListing } from "~/features/vods/components/VodListing";
+import { usePagination } from "~/hooks/usePagination";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { GameBadgeId } from "~/modules/in-game-lists/game-badge-ids";
 import type {
@@ -43,6 +46,7 @@ import {
 	tournamentOrganizationPage,
 	userArtPage,
 	userBuildsPage,
+	userPage,
 	userResultsPage,
 	userVodsPage,
 } from "~/utils/urls";
@@ -244,6 +248,10 @@ export function Widget({
 			case "game-badges-small":
 				return widget.data.length === 0 ? null : (
 					<GameBadgesDisplay badgeIds={widget.data} />
+				);
+			case "friends":
+				return widget.data.length === 0 ? null : (
+					<FriendsWidget friends={widget.data} />
 				);
 			default:
 				assertUnreachable(widget);
@@ -861,6 +869,55 @@ function TierListWidget({ searchParams }: { searchParams: string }) {
 				</div>
 				{title ? title : t("user:widget.tier-list.untitled")}
 			</Link>
+		</div>
+	);
+}
+
+const FRIENDS_PER_PAGE = 6;
+
+function FriendsWidget({
+	friends,
+}: {
+	friends: Extract<LoadedWidget, { id: "friends" }>["data"];
+}) {
+	const {
+		itemsToDisplay,
+		currentPage,
+		pagesCount,
+		nextPage,
+		previousPage,
+		setPage,
+		everythingVisible,
+	} = usePagination({
+		items: friends,
+		pageSize: FRIENDS_PER_PAGE,
+		scrollToTop: false,
+	});
+
+	return (
+		<div className={styles.friendsList}>
+			{itemsToDisplay.map((friend) => (
+				<Link
+					key={friend.id}
+					to={userPage(friend)}
+					className={styles.friendLink}
+				>
+					<Avatar user={friend} size="xxs" />
+					{friend.username}
+				</Link>
+			))}
+			{!everythingVisible ? (
+				<div className="mt-4">
+					<Pagination
+						compact
+						currentPage={currentPage}
+						pagesCount={pagesCount}
+						nextPage={nextPage}
+						previousPage={previousPage}
+						setPage={setPage}
+					/>
+				</div>
+			) : null}
 		</div>
 	);
 }
