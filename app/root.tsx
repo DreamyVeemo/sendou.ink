@@ -225,11 +225,7 @@ function Document({
 						</I18nProvider>
 					</RouterProvider>
 				</React.StrictMode>
-				<ScrollRestoration
-					getKey={(location) => {
-						return location.pathname;
-					}}
-				/>
+				<ScrollRestoration />
 				<Scripts />
 			</body>
 		</html>
