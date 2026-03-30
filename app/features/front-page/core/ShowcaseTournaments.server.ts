@@ -189,10 +189,10 @@ function deleteExtraResults(tournaments: ShowcaseCalendarEvent[]) {
 
 	const rankedResults = tournaments
 		.filter((tournament) => tournament.firstPlacer && tournament.isRanked)
-		.sort((a, b) => b.teamsCount - a.teamsCount);
+		.sort((a, b) => showcaseScore(b) - showcaseScore(a));
 	const nonRankedResults = tournaments
 		.filter((tournament) => tournament.firstPlacer && !tournament.isRanked)
-		.sort((a, b) => b.teamsCount - a.teamsCount);
+		.sort((a, b) => showcaseScore(b) - showcaseScore(a));
 
 	const rankedResultsToKeep = rankedResults.slice(0, 4);
 	// min 2, max 6 non ranked results
@@ -382,4 +382,14 @@ function databaseTimestampSixHoursAgo() {
 	now.setHours(now.getHours() - 6);
 
 	return dateToDatabaseTimestamp(now);
+}
+
+const TIER_BONUS_PER_STEP = 5;
+function showcaseScore(tournament: ShowcaseCalendarEvent): number {
+	const tierBonus =
+		typeof tournament.tier === "number"
+			? (10 - tournament.tier) * TIER_BONUS_PER_STEP
+			: 0;
+
+	return tournament.teamsCount + tierBonus;
 }
