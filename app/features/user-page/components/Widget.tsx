@@ -19,6 +19,7 @@ import type { Tables } from "~/db/tables";
 import { previewUrl } from "~/features/art/art-utils";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { VodListing } from "~/features/vods/components/VodListing";
+import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { usePagination } from "~/hooks/usePagination";
 import { useTimeFormat } from "~/hooks/useTimeFormat";
 import type { GameBadgeId } from "~/modules/in-game-lists/game-badge-ids";
@@ -874,12 +875,19 @@ function TierListWidget({ searchParams }: { searchParams: string }) {
 }
 
 const FRIENDS_PER_PAGE = 6;
+const FRIENDS_PER_PAGE_MOBILE = 3;
 
 function FriendsWidget({
 	friends,
 }: {
 	friends: Extract<LoadedWidget, { id: "friends" }>["data"];
 }) {
+	const mainContentWidth = useMainContentWidth();
+	const pageSize =
+		mainContentWidth > 0 && mainContentWidth < 720
+			? FRIENDS_PER_PAGE_MOBILE
+			: FRIENDS_PER_PAGE;
+
 	const {
 		itemsToDisplay,
 		currentPage,
@@ -890,7 +898,7 @@ function FriendsWidget({
 		everythingVisible,
 	} = usePagination({
 		items: friends,
-		pageSize: FRIENDS_PER_PAGE,
+		pageSize,
 		scrollToTop: false,
 	});
 
