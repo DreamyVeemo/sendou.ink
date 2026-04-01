@@ -74,6 +74,7 @@ export default defineConfig(({ mode }) => {
 			// if we decide later that this is a useful optimization in some cases then we can
 			// switch the value to a callback one that checks the file path
 			assetsInlineLimit: 0,
+			sourcemap: true,
 		},
 	};
 });
