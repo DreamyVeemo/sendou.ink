@@ -615,6 +615,8 @@
 
 .top-leaderboard {
 	min-height: 100px;
+	max-height: 100px;
+	overflow-y: clip;
 	margin-top: 10px;
 	display: grid;
 	place-items: center;
