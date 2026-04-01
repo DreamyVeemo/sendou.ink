@@ -68,6 +68,9 @@ export default defineConfig(({ mode }) => {
 				},
 			],
 		},
+		define: {
+			__GIT_COMMIT__: JSON.stringify(process.env.RENDER_GIT_COMMIT ?? ""),
+		},
 		build: {
 			assetsInlineLimit: (filePath: string) => {
 				if (/\/locales\/[^/]+\/[^/]+\.json$/.test(filePath)) return false;
