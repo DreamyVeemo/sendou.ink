@@ -5,6 +5,7 @@ import type { MetaFunction } from "react-router";
 import {
 	useFetcher,
 	useLoaderData,
+	useMatches,
 	useNavigate,
 	useSearchParams,
 } from "react-router";
@@ -19,6 +20,7 @@ import { SelectFormField } from "~/form/fields/SelectFormField";
 import { SendouForm } from "~/form/SendouForm";
 import { languages } from "~/modules/i18n/config";
 import { useHasRole } from "~/modules/permissions/hooks";
+import type { RootLoaderData } from "~/root";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { LOG_OUT_URL, navIconUrl, SETTINGS_PAGE } from "~/utils/urls";
@@ -220,7 +222,8 @@ function ThemeSelector() {
 }
 
 function CustomColorSelector() {
-	const data = useLoaderData<typeof loader>();
+	const [root] = useMatches();
+	const rootData = root.data as RootLoaderData | undefined;
 	const isSupporter = useHasRole("SUPPORTER");
 	const fetcher = useFetcher();
 
@@ -245,7 +248,7 @@ function CustomColorSelector() {
 	return (
 		<CustomThemeSelector
 			isPersonalTheme
-			initialTheme={data.customTheme}
+			initialTheme={rootData?.customTheme}
 			isSupporter={isSupporter}
 			onSave={handleSave}
 			onReset={handleReset}
