@@ -7,10 +7,17 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { useUser } from "~/features/auth/core/user";
 import { TournamentStream } from "~/features/tournament/components/TournamentStream";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import {
+	useTournament,
+	useTournamentVods,
+} from "~/features/tournament/routes/to.$id";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { Unpacked } from "~/utils/types";
-import { tournamentMatchPage, tournamentStreamsPage } from "~/utils/urls";
+import {
+	tournamentMatchPage,
+	tournamentStreamsPage,
+	vodUrl,
+} from "~/utils/urls";
 import type { Bracket } from "../../core/Bracket";
 import * as Deadline from "../../core/Deadline";
 import type { TournamentData } from "../../core/Tournament.server";
@@ -31,6 +38,7 @@ interface MatchProps {
 	hideMatchTimer?: boolean;
 	lineType?: LineType;
 	lineVerticalExtend?: number;
+	spoilerCensor?: "full" | "score-only";
 }
 
 export function Match(props: MatchProps) {
@@ -68,6 +76,7 @@ export function Match(props: MatchProps) {
 
 function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 	const tournament = useTournament();
+	const vods = useTournamentVods();
 	const streamingParticipants = tournament.streamingParticipantIds ?? [];
 
 	const prefix = () => {
@@ -80,6 +89,7 @@ function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 
 	const isOver =
 		match.opponent1?.result === "win" || match.opponent2?.result === "win";
+	const matchVods = isOver ? vods.filter((v) => v.matchId === match.id) : [];
 	const hasStreams = () => {
 		if (isOver || !match.opponent1?.id || !match.opponent2?.id) return false;
 		if (
@@ -141,6 +151,23 @@ function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 				>
 					<MatchStreams match={match} />
 				</SendouPopover>
+			) : matchVods.length > 0 ? (
+				<SendouPopover
+					placement="top"
+					popoverClassName="w-max"
+					trigger={
+						<SendouButton
+							className={clsx(
+								styles.matchHeaderBox,
+								styles.matchHeaderBoxButton,
+							)}
+						>
+							📺 VOD
+						</SendouButton>
+					}
+				>
+					<MatchVods vods={matchVods} />
+				</SendouPopover>
 			) : null}
 		</div>
 	);
@@ -177,6 +204,7 @@ function MatchRow({
 	isPreview,
 	showSimulation,
 	bracket,
+	spoilerCensor,
 }: MatchProps & { side: 1 | 2 }) {
 	const user = useUser();
 	const tournament = useTournament();
@@ -185,6 +213,7 @@ function MatchRow({
 	const opponent = match[`opponent${side}`];
 
 	const score = () => {
+		if (spoilerCensor) return null;
 		if (!match.opponent1?.id || !match.opponent2?.id || isPreview) return null;
 
 		const opponentScore = opponent!.score;
@@ -208,7 +237,7 @@ function MatchRow({
 		return opponentScore ?? 0;
 	};
 
-	const isLoser = opponent?.result === "loss";
+	const isLoser = spoilerCensor ? false : opponent?.result === "loss";
 
 	const { team, simulated } = (() => {
 		if (opponent?.id) {
@@ -228,15 +257,24 @@ function MatchRow({
 	const ownTeam = tournament.teamMemberOfByUser(user);
 
 	const logoSrc = team ? tournament.tournamentTeamLogoSrc(team) : null;
-	const showAvatar = !simulated && team;
+	const showAvatar = spoilerCensor === "full" ? false : !simulated && team;
 
-	const isBigSeedNumber = team?.seed && team.seed > 99;
+	const isBigSeedNumber =
+		spoilerCensor === "full" ? false : team?.seed && team.seed > 99;
+
+	const displayedSeed = spoilerCensor === "full" ? null : team?.seed;
+	const displayedName =
+		spoilerCensor === "full" ? "???" : (team?.name ?? "???");
 
 	return (
 		<div
 			className={clsx("stack horizontal", { "text-lighter": isLoser })}
 			data-participant-id={team?.id}
-			title={team?.members.map((m) => m.username).join(", ")}
+			title={
+				spoilerCensor === "full"
+					? undefined
+					: team?.members.map((m) => m.username).join(", ")
+			}
 		>
 			<div
 				className={clsx(styles.matchSeed, {
@@ -244,13 +282,13 @@ function MatchRow({
 					[styles.matchSeedWide]: isBigSeedNumber,
 				})}
 			>
-				{team?.seed}
+				{displayedSeed}
 			</div>
 			{showAvatar ? (
 				<Avatar
 					size="xxxs"
 					url={logoSrc}
-					identiconInput={team.name}
+					identiconInput={team!.name}
 					className="mr-1"
 				/>
 			) : null}
@@ -267,7 +305,7 @@ function MatchRow({
 					invisible: !team,
 				})}
 			>
-				{team?.name ?? "???"}
+				{displayedName}
 			</div>{" "}
 			<div className={styles.matchScore}>{score()}</div>
 		</div>
@@ -317,6 +355,58 @@ function MatchStreams({ match }: Pick<MatchProps, "match">) {
 					withThumbnail={false}
 				/>
 			))}
+		</div>
+	);
+}
+
+interface MatchVodsProps {
+	vods: Array<{
+		matchId: number;
+		userId: number | null;
+		platform: string;
+		account: string;
+		platformVideoId: string;
+		timestampSeconds: number;
+		viewCount: number;
+	}>;
+}
+
+function MatchVods({ vods }: MatchVodsProps) {
+	const tournament = useTournament();
+
+	return (
+		<div className={clsx("stack md", parentStyles.streamPopover)}>
+			{vods.map((vod) => {
+				const team = vod.userId
+					? tournament.ctx.teams.find((t) =>
+							t.members.some((m) => m.userId === vod.userId),
+						)
+					: null;
+				const user = team?.members.find((m) => m.userId === vod.userId);
+
+				return (
+					<a
+						key={`${vod.platformVideoId}-${vod.account}`}
+						href={vodUrl(vod)}
+						target="_blank"
+						rel="noopener noreferrer"
+						className={parentStyles.vodLink}
+					>
+						{user ? (
+							<>
+								<Avatar size="xxs" user={user} />
+								<span className="font-semi-bold">{user.username}</span>
+								<span className="text-theme-secondary">{team?.name}</span>
+							</>
+						) : (
+							<span className="font-semi-bold">{vod.account}</span>
+						)}
+						<span className="text-lighter text-xs">
+							{vod.viewCount.toLocaleString()} views
+						</span>
+					</a>
+				);
+			})}
 		</div>
 	);
 }
