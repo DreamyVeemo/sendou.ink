@@ -513,13 +513,30 @@
 	width: 280px;
 }
 
-.vodLink {
+.vodGrid {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	gap: var(--s-1) var(--s-2);
+	align-items: center;
+	font-size: var(--font-xs);
+	white-space: nowrap;
+}
+
+.vodGrid a {
+	display: grid;
+	grid-template-columns: subgrid;
+	grid-column: 1 / -1;
+	align-items: center;
+}
+
+.vodUser {
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
-	font-size: var(--font-xs);
+}
+
+.vodTeamName {
 	overflow: hidden;
-	white-space: nowrap;
 	text-overflow: ellipsis;
 	min-width: 0;
 }

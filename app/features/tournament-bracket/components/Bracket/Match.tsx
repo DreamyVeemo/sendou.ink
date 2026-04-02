@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { differenceInMinutes } from "date-fns";
+import { Eye } from "lucide-react";
 import * as React from "react";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
@@ -375,7 +376,7 @@ function MatchVods({ vods }: MatchVodsProps) {
 	const tournament = useTournament();
 
 	return (
-		<div className={clsx("stack md", parentStyles.streamPopover)}>
+		<div className={parentStyles.vodGrid}>
 			{vods.map((vod) => {
 				const team = vod.userId
 					? tournament.ctx.teams.find((t) =>
@@ -390,19 +391,25 @@ function MatchVods({ vods }: MatchVodsProps) {
 						href={vodUrl(vod)}
 						target="_blank"
 						rel="noopener noreferrer"
-						className={parentStyles.vodLink}
 					>
-						{user ? (
-							<>
-								<Avatar size="xxs" user={user} />
-								<span className="font-semi-bold">{user.username}</span>
-								<span className="text-theme-secondary">{team?.name}</span>
-							</>
-						) : (
-							<span className="font-semi-bold">{vod.account}</span>
-						)}
-						<span className="text-lighter text-xs">
-							{vod.viewCount.toLocaleString()} views
+						<span className={parentStyles.vodUser}>
+							{user ? (
+								<>
+									<Avatar size="xxs" user={user} />
+									<span className="font-semi-bold">{user.username}</span>
+								</>
+							) : (
+								<span className="font-semi-bold">{vod.account}</span>
+							)}
+						</span>
+						<span
+							className={clsx("text-theme-secondary", parentStyles.vodTeamName)}
+						>
+							{user ? team?.name : null}
+						</span>
+						<span className="text-lighter stack horizontal xs items-center">
+							<Eye size={12} />
+							{vod.viewCount.toLocaleString()}
 						</span>
 					</a>
 				);
