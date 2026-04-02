@@ -63,6 +63,12 @@ export async function processOneTournament(tournamentId: number) {
 		);
 
 		for (const streamer of streamers) {
+			const dbUserId =
+				streamerDbUserIds.get(streamer.twitchAccount.toLowerCase()) ?? null;
+
+			// cast accounts (null userId) are handled via castedMatchHistory below
+			if (dbUserId === null) continue;
+
 			const twitchUserId = loginToTwitchId.get(
 				streamer.twitchAccount.toLowerCase(),
 			);
@@ -74,16 +80,11 @@ export async function processOneTournament(tournamentId: number) {
 			);
 			if (!videos) continue;
 
-			const dbUserId =
-				streamerDbUserIds.get(streamer.twitchAccount.toLowerCase()) ?? null;
-
 			for (const match of matches) {
 				if (!match.startedAt) continue;
 
-				if (dbUserId !== null) {
-					const matchParticipants = participantsByMatch.get(match.id);
-					if (!matchParticipants?.has(dbUserId)) continue;
-				}
+				const matchParticipants = participantsByMatch.get(match.id);
+				if (!matchParticipants?.has(dbUserId)) continue;
 
 				const vodMatch = findMatchingVod(match.startedAt, match, videos);
 				if (!vodMatch) continue;
