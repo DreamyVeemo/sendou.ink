@@ -252,6 +252,7 @@ function CustomColorSelector() {
 			isSupporter={isSupporter}
 			onSave={handleSave}
 			onReset={handleReset}
+			fetcherState={fetcher.state}
 		/>
 	);
 }
