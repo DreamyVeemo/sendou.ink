@@ -10,8 +10,9 @@ export function useBracketSpoilerCensor() {
 	const { isEnabled, isCensored, reveal, hide } = useSpoilerFree();
 
 	const withinSpoilerWindow =
+		tournament.ctx.isFinalized &&
 		differenceInDays(new Date(), tournament.ctx.startTime) <
-		TOURNAMENT.VOD_VISIBILITY_DAYS;
+			TOURNAMENT.VOD_VISIBILITY_DAYS;
 
 	const censored = withinSpoilerWindow && isCensored(tournament.ctx.id);
 
