@@ -443,33 +443,38 @@ export async function findUserScrims(userId: number): Promise<SidebarScrim[]> {
 		.orderBy("ScrimPost.at", "asc")
 		.execute();
 
-	return rows.map(mapDBRowToScrimPost).map((post) => {
-		const isAccepted = Scrim.isAccepted(post);
+	return rows
+		.map(mapDBRowToScrimPost)
+		.filter(
+			(post) => !Scrim.isAccepted(post) || Scrim.isParticipating(post, userId),
+		)
+		.map((post) => {
+			const isAccepted = Scrim.isAccepted(post);
 
-		if (!isAccepted) {
+			if (!isAccepted) {
+				return {
+					id: post.id,
+					at: post.at,
+					opponentName: null,
+					opponentAvatarUrl: null,
+					isAccepted: false,
+				};
+			}
+
+			const userIsInPost = post.users.some((u) => u.id === userId);
+			const opponent = userIsInPost
+				? post.requests[0]
+				: { team: post.team, users: post.users };
+			const opponentTeam = opponent?.team;
+			const opponentOwner = opponent?.users.find((u) => u.isOwner);
+
 			return {
 				id: post.id,
 				at: post.at,
-				opponentName: null,
-				opponentAvatarUrl: null,
-				isAccepted: false,
+				opponentName: opponentTeam?.name ?? null,
+				opponentAvatarUrl:
+					opponentTeam?.avatarUrl ?? opponentOwner?.discordAvatar ?? null,
+				isAccepted: true,
 			};
-		}
-
-		const userIsInPost = post.users.some((u) => u.id === userId);
-		const opponent = userIsInPost
-			? post.requests[0]
-			: { team: post.team, users: post.users };
-		const opponentTeam = opponent?.team;
-		const opponentOwner = opponent?.users.find((u) => u.isOwner);
-
-		return {
-			id: post.id,
-			at: post.at,
-			opponentName: opponentTeam?.name ?? null,
-			opponentAvatarUrl:
-				opponentTeam?.avatarUrl ?? opponentOwner?.discordAvatar ?? null,
-			isAccepted: true,
-		};
-	});
+		});
 }
