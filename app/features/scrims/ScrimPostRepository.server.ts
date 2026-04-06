@@ -408,7 +408,7 @@ export type SidebarScrim = {
 	at: number;
 	opponentName: string | null;
 	opponentAvatarUrl: string | null;
-	isAccepted: boolean;
+	status: "booked" | "looking" | "requestPending";
 };
 
 export async function findUserScrims(userId: number): Promise<SidebarScrim[]> {
@@ -450,6 +450,7 @@ export async function findUserScrims(userId: number): Promise<SidebarScrim[]> {
 		)
 		.map((post) => {
 			const isAccepted = Scrim.isAccepted(post);
+			const userIsInPost = post.users.some((u) => u.id === userId);
 
 			if (!isAccepted) {
 				return {
@@ -457,11 +458,12 @@ export async function findUserScrims(userId: number): Promise<SidebarScrim[]> {
 					at: post.at,
 					opponentName: null,
 					opponentAvatarUrl: null,
-					isAccepted: false,
+					status: userIsInPost
+						? ("looking" as const)
+						: ("requestPending" as const),
 				};
 			}
 
-			const userIsInPost = post.users.some((u) => u.id === userId);
 			const opponent = userIsInPost
 				? post.requests[0]
 				: { team: post.team, users: post.users };
@@ -474,7 +476,7 @@ export async function findUserScrims(userId: number): Promise<SidebarScrim[]> {
 				opponentName: opponentTeam?.name ?? null,
 				opponentAvatarUrl:
 					opponentTeam?.avatarUrl ?? opponentOwner?.discordAvatar ?? null,
-				isAccepted: true,
+				status: "booked" as const,
 			};
 		});
 }
