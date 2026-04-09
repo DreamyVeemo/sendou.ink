@@ -121,7 +121,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			const team = tournament.teamById(data.teamId);
 			errorToastIfFalsy(team, "Invalid team id");
 
-			await TournamentRepository.updateTeamName({
+			await TournamentTeamRepository.updateName({
 				tournamentTeamId: data.teamId,
 				name: data.teamName,
 			});
@@ -147,7 +147,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			invariant(bracket, "Invalid bracket idx");
 			errorToastIfFalsy(bracket.preview, "Bracket has been started");
 
-			await TournamentRepository.checkIn({
+			await TournamentTeamRepository.checkIn({
 				tournamentTeamId: data.teamId,
 				// no sources = regular check in
 				bracketIdx: !bracket.sources ? null : data.bracketIdx,
@@ -169,7 +169,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			invariant(bracket, "Invalid bracket idx");
 			errorToastIfFalsy(bracket.preview, "Bracket has been started");
 
-			await TournamentRepository.checkOut({
+			await TournamentTeamRepository.checkOut({
 				tournamentTeamId: data.teamId,
 				// no sources = regular check in
 				bracketIdx: !bracket.sources ? null : data.bracketIdx,
@@ -402,7 +402,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				droppedTeamId: data.teamId,
 			});
 
-			await TournamentRepository.dropTeamOut({
+			await TournamentTeamRepository.dropOut({
 				tournamentTeamId: data.teamId,
 				previewBracketIdxs: tournament.brackets.flatMap((b, idx) =>
 					b.preview ? idx : [],
@@ -415,7 +415,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		case "UNDO_DROP_TEAM_OUT": {
 			validateIsTournamentOrganizer();
 
-			await TournamentRepository.undoDropTeamOut(data.teamId);
+			await TournamentTeamRepository.undoDropOut(data.teamId);
 
 			message = "Team drop out undone";
 			break;
