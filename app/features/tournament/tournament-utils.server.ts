@@ -63,6 +63,8 @@ export function endDroppedTeamMatches({
 }) {
 	const stageData = manager.get.tournamentData(tournament.ctx.id);
 
+	const endedMatchIds: number[] = [];
+
 	for (const match of stageData.match) {
 		if (!match.opponent1?.id || !match.opponent2?.id) continue;
 		if (match.opponent1.result === "win" || match.opponent2.result === "win")
@@ -100,5 +102,9 @@ export function endDroppedTeamMatches({
 			},
 			true,
 		);
+
+		endedMatchIds.push(match.id);
 	}
+
+	return endedMatchIds;
 }
