@@ -544,16 +544,26 @@ function PageIcon({ crumb }: { crumb: Breadcrumb }) {
 	const isExternal = crumb.imgPath.includes(".");
 	const iconClass = clsx(styles.pageIcon, "rounded");
 
-	return isExternal ? (
-		<img src={crumb.imgPath} alt="" className={iconClass} />
-	) : (
-		<Image
-			path={crumb.imgPath}
-			alt=""
-			className={iconClass}
-			width={20}
-			height={20}
-		/>
+	return (
+		<div className={styles.pageIconWrapper}>
+			{isExternal ? (
+				<img
+					src={crumb.imgPath}
+					alt=""
+					className={iconClass}
+					width={28}
+					height={28}
+				/>
+			) : (
+				<Image
+					path={crumb.imgPath}
+					alt=""
+					className={iconClass}
+					width={20}
+					height={20}
+				/>
+			)}
+		</div>
 	);
 }
 
