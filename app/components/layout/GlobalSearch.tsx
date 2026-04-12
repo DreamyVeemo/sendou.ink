@@ -234,7 +234,9 @@ function GlobalSearchContent({
 	);
 
 	const hasQuery = query.length >= 3;
-	const results = hasQuery ? (fetcher.data?.results ?? []) : [];
+	const fetchedType = fetcher.data?.type ?? null;
+	const results =
+		hasQuery && fetchedType === searchType ? (fetcher.data?.results ?? []) : [];
 
 	const weaponResults =
 		searchType === "weapons" && hasQuery ? filterWeaponResults(query, t) : [];
