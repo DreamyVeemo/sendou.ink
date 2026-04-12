@@ -224,7 +224,7 @@ function GlobalSearchContent({
 	useDebounce(
 		() => {
 			if (searchType === "weapons") return;
-			if (!query) return;
+			if (query.length < 3) return;
 			fetcher.load(
 				`/search?q=${encodeURIComponent(query)}&type=${searchType}&limit=10`,
 			);
@@ -233,11 +233,11 @@ function GlobalSearchContent({
 		[query, searchType],
 	);
 
-	const results = fetcher.data?.results ?? [];
-	const hasQuery = query.length > 0;
+	const hasQuery = query.length >= 3;
+	const results = hasQuery ? (fetcher.data?.results ?? []) : [];
 
 	const weaponResults =
-		searchType === "weapons" ? filterWeaponResults(query, t) : [];
+		searchType === "weapons" && hasQuery ? filterWeaponResults(query, t) : [];
 
 	const recentWeapons: SelectedWeapon[] =
 		searchType === "weapons"
@@ -277,7 +277,7 @@ function GlobalSearchContent({
 
 	const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value;
-		const separatorMatch = value.match(/^([a-zA-Z]+)\.(?=[a-zA-Z ]) ?/);
+		const separatorMatch = value.match(/^([a-zA-Z]+)\.$/);
 
 		if (separatorMatch) {
 			const typedPrefix = separatorMatch[1];
@@ -287,7 +287,7 @@ function GlobalSearchContent({
 			if (matchedType) {
 				setSearchType(matchedType);
 				setSelectedWeapon(null);
-				setQuery(value.slice(separatorMatch[0].length));
+				setQuery("");
 				return;
 			}
 		}
