@@ -43,6 +43,7 @@ import { NotificationDot } from "../NotificationDot";
 import { ListLink, SideNav, SideNavFooter, SideNavHeader } from "../SideNav";
 import sideNavStyles from "../SideNav.module.css";
 import { StreamListItems } from "../StreamListItems";
+import { AuthErrorDialog } from "./AuthErrorDialog";
 import { ChatSidebar } from "./ChatSidebar";
 import { Footer } from "./Footer";
 import styles from "./index.module.css";
@@ -447,6 +448,7 @@ export function Layout({
 					<ChatSidebar onClose={() => setChatSidebarOpen(false)} />
 				</div>
 			) : null}
+			<AuthErrorDialog />
 		</>
 	);
 }
