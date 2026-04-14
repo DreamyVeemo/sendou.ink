@@ -175,6 +175,8 @@ async function resolveInGameName(
 		.where("User.id", "=", userId)
 		.executeTakeFirstOrThrow();
 
+	invariant(user.inGameName, "In-game name is required but not set");
+
 	return user.inGameName;
 }
 
