@@ -30,7 +30,7 @@ export function create(this: BracketsManager, stage: InputStage): Stage {
 	return instance.run();
 }
 
-export class Create {
+class Create {
 	private storage: Storage;
 	private stage: InputStage;
 	private readonly seedOrdering: SeedOrdering[];
