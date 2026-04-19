@@ -18,7 +18,10 @@ import { tournamentFromDBCached } from "../core/Tournament.server";
 import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
 import * as TournamentMatchRepository from "../TournamentMatchRepository.server";
 import { matchPageParamsSchema } from "../tournament-bracket-schemas.server";
-import { matchEndedEarly } from "../tournament-bracket-utils";
+import {
+	matchEndedEarly,
+	tournamentTeamToActiveRosterUserIds,
+} from "../tournament-bracket-utils";
 
 export type TournamentMatchLoaderData = typeof loader;
 
@@ -147,7 +150,23 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		match.opponentOne &&
 		match.opponentTwo
 	) {
-		const playerIds = match.players.map((p) => p.id);
+		// only add global chat for active roster (or all if not yet set i.e. first match)
+		// if roster changed mid-set the subs can still see the chat on the match page
+		const teamAlpha = tournament.teamById(match.opponentOne.id!)!;
+		const teamAlphaActiveRoster =
+			tournamentTeamToActiveRosterUserIds(
+				teamAlpha,
+				tournament.minMembersPerTeam,
+			) ?? teamAlpha.members.map((m) => m.userId);
+		const teamBravo = tournament.teamById(match.opponentTwo.id!)!;
+		const teamBravoActiveRoster =
+			tournamentTeamToActiveRosterUserIds(
+				teamBravo,
+				tournament.minMembersPerTeam,
+			) ?? teamBravo.members.map((m) => m.userId);
+
+		const playerIds = [...teamAlphaActiveRoster, ...teamBravoActiveRoster];
+
 		const matchContext = tournament.matchContextNamesById(matchId);
 
 		ChatSystemMessage.setMetadata({
