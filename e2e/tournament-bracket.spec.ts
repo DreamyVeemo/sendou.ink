@@ -866,7 +866,7 @@ test.describe("Tournament bracket", () => {
 	});
 
 	test("locks/unlocks matches & sets match as casted", async ({ page }) => {
-		test.slow();
+		test.setTimeout(120000);
 
 		const tournamentId = 2;
 
