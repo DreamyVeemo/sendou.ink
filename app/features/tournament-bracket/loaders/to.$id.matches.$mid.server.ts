@@ -165,14 +165,15 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		tournament.isOrganizerOrStreamer(user) ||
 		match.players.some((p) => p.id === user?.id);
 
-	const isStaff = user?.roles.includes("STAFF") ?? false;
-	const chatCodeExpired = tournament.ctx.isFinalized
-		? true
-		: !chatAccessible({
-				isStaff,
-				expiresAfterDays: 90,
-				comparedTo: tournament.ctx.startTime,
-			});
+	const isSiteStaff = user?.roles.includes("STAFF") ?? false;
+	const isTournamentStaff = tournament.isOrganizer(user);
+	const chatCodeExpired =
+		tournament.ctx.isFinalized && !isSiteStaff && !isTournamentStaff
+			? true
+			: !chatAccessible({
+					expiresAfterDays: tournament.isLeagueDivision ? 30 : 7,
+					comparedTo: tournament.ctx.startTime,
+				});
 
 	const visibleChatCode =
 		shouldSeeChat && !chatCodeExpired ? match.chatCode : undefined;
