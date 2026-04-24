@@ -51,7 +51,7 @@
 		"@react-router/serve": "7.14.1",
 		"@remix-run/form-data-parser": "0.16.0",
 		"@tldraw/tldraw": "3.12.1",
-		"@zumer/snapdom": "2.8.0",
+		"@zumer/snapdom": "2.9.0",
 		"aws-sdk": "2.1693.0",
 		"better-sqlite3": "12.9.0",
 		"clsx": "2.1.1",
