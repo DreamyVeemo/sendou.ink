@@ -327,8 +327,10 @@ function ChatProviderInner({
 				),
 			);
 
-			if (roomCode === activeRoom && chatOpen) {
+			const isOwnMessage = msg.userId === userId;
+			if (isOwnMessage || (roomCode === activeRoom && chatOpen)) {
 				writeLastReadCount(roomCode, msg.totalMessageCount);
+				setUnreadCounts((prev) => ({ ...prev, [roomCode]: 0 }));
 			} else {
 				setUnreadCounts((prev) => ({
 					...prev,
@@ -402,7 +404,7 @@ function ChatProviderInner({
 
 	const messagesForRoom = React.useCallback(
 		(chatCode: string) => {
-			return (messagesByRoom[chatCode] ?? []).sort(
+			return (messagesByRoom[chatCode] ?? []).toSorted(
 				(a, b) => a.timestamp - b.timestamp,
 			);
 		},

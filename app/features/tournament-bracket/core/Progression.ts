@@ -97,6 +97,21 @@ export type ValidationError =
 	| {
 			type: "SWISS_EARLY_ADVANCE_NO_DESTINATION";
 			bracketIdx: number;
+	  }
+	// A/B divisions setting is only valid on round robin brackets
+	| {
+			type: "AB_DIVISIONS_NOT_ROUND_ROBIN";
+			bracketIdx: number;
+	  }
+	// A/B divisions setting is only valid on starting brackets (no sources)
+	| {
+			type: "AB_DIVISIONS_NOT_STARTING";
+			bracketIdx: number;
+	  }
+	// A/B divisions requires an even teamsPerGroup so each group can be split equally
+	| {
+			type: "AB_DIVISIONS_ODD_TEAMS_PER_GROUP";
+			bracketIdx: number;
 	  };
 
 /** Takes validated brackets and returns them in the format that is ready for user input. */
@@ -274,6 +289,30 @@ export function bracketsToValidationError(
 		};
 	}
 
+	faultyBracketIdx = abDivisionsOnNonRoundRobin(brackets);
+	if (typeof faultyBracketIdx === "number") {
+		return {
+			type: "AB_DIVISIONS_NOT_ROUND_ROBIN",
+			bracketIdx: faultyBracketIdx,
+		};
+	}
+
+	faultyBracketIdx = abDivisionsOnNonStartingBracket(brackets);
+	if (typeof faultyBracketIdx === "number") {
+		return {
+			type: "AB_DIVISIONS_NOT_STARTING",
+			bracketIdx: faultyBracketIdx,
+		};
+	}
+
+	faultyBracketIdx = abDivisionsOddTeamsPerGroup(brackets);
+	if (typeof faultyBracketIdx === "number") {
+		return {
+			type: "AB_DIVISIONS_ODD_TEAMS_PER_GROUP",
+			bracketIdx: faultyBracketIdx,
+		};
+	}
+
 	return null;
 }
 
@@ -366,7 +405,6 @@ function resolvesWinner(brackets: ParsedBracket[]) {
 	const finals = brackets.find((_, idx) => isFinals(idx, brackets));
 
 	if (!finals) return false;
-	if (finals?.type === "round_robin") return false;
 	if (
 		finals.type === "swiss" &&
 		(finals.settings.groupCount ?? TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT) > 1
@@ -474,9 +512,13 @@ function tooManyPlacements(brackets: ParsedBracket[]) {
 		for (const source of bracket.sources ?? []) {
 			if (!roundRobins.includes(source.bracketIdx)) continue;
 
-			const size =
-				brackets[source.bracketIdx].settings.teamsPerGroup ??
+			const sourceSettings = brackets[source.bracketIdx].settings;
+			const teamsPerGroup =
+				sourceSettings.teamsPerGroup ??
 				TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
+			const size = sourceSettings.hasAbDivisions
+				? teamsPerGroup / 2
+				: teamsPerGroup;
 
 			if (source.placements.some((placement) => placement > size)) {
 				return bracketIdx;
@@ -546,6 +588,46 @@ function noDoubleEliminationPositive(brackets: ParsedBracket[]) {
 	return null;
 }
 
+function abDivisionsOnNonRoundRobin(brackets: ParsedBracket[]) {
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		if (bracket.settings.hasAbDivisions && bracket.type !== "round_robin") {
+			return bracketIdx;
+		}
+	}
+
+	return null;
+}
+
+function abDivisionsOnNonStartingBracket(brackets: ParsedBracket[]) {
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		if (
+			bracket.settings.hasAbDivisions &&
+			bracket.sources &&
+			bracket.sources.length > 0
+		) {
+			return bracketIdx;
+		}
+	}
+
+	return null;
+}
+
+function abDivisionsOddTeamsPerGroup(brackets: ParsedBracket[]) {
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		if (!bracket.settings.hasAbDivisions) continue;
+
+		const teamsPerGroup =
+			bracket.settings.teamsPerGroup ??
+			TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
+
+		if (teamsPerGroup % 2 !== 0) {
+			return bracketIdx;
+		}
+	}
+
+	return null;
+}
+
 function swissEarlyAdvanceWithoutDestination(brackets: ParsedBracket[]) {
 	for (const [bracketIdx, bracket] of brackets.entries()) {
 		if (bracket.type === "swiss" && bracket.settings.advanceThreshold) {
@@ -583,6 +665,16 @@ export function isFinals(idx: number, brackets: ParsedBracket[]) {
 	invariant(idx < brackets.length, "Bracket index out of bounds");
 
 	return resolveMainBracketProgression(brackets).at(-1) === idx;
+}
+
+/** Returns true if the finals bracket of the tournament is an A/B divisions round robin. */
+export function hasAbDivisionsFinals(brackets: ParsedBracket[]): boolean {
+	const finals = brackets.find((_, idx) => isFinals(idx, brackets));
+	if (!finals) return false;
+
+	return (
+		finals.type === "round_robin" && finals.settings?.hasAbDivisions === true
+	);
 }
 
 /** Given bracketIdx and bracketProgression will resolve if this an "underground bracket".

@@ -150,14 +150,14 @@ export type BadgeOwner = {
 };
 
 export interface Build {
-	clothesGearSplId: number;
+	clothesGearSplId: number | null;
 	description: string | null;
-	headGearSplId: number;
+	headGearSplId: number | null;
 	id: GeneratedAlways<number>;
 	modes: JSONColumnTypeNullable<ModeShort[]>;
 	ownerId: number;
 	private: DBBoolean | null;
-	shoesGearSplId: number;
+	shoesGearSplId: number | null;
 	title: string;
 	updatedAt: Generated<number>;
 }
@@ -520,6 +520,7 @@ export interface TournamentSettings {
 	maxMembersPerTeam?: number;
 	isTest?: boolean;
 	isDraft?: boolean;
+	requireSendouQParticipation?: boolean;
 }
 
 export interface CastedMatchesInfo {
@@ -743,6 +744,8 @@ export interface TournamentStageSettings {
 	thirdPlaceMatch?: boolean;
 	// RR
 	teamsPerGroup?: number;
+	/** (RR only) When true, teams are split into A and B divisions and matches only pair A-vs-B. Only valid on starting brackets. */
+	hasAbDivisions?: boolean;
 	// SWISS
 	groupCount?: number;
 	// SWISS
@@ -813,6 +816,8 @@ export interface TournamentTeam {
 	isPlaceholder: Generated<DBBoolean>;
 	lfgNote: string | null;
 	chatCode: Generated<string | null>;
+	/** A/B division assignment for bipartite round robin brackets. `0` = A, `1` = B, `null` = unassigned. */
+	abDivision: number | null;
 }
 
 export interface TournamentTeamCheckIn {

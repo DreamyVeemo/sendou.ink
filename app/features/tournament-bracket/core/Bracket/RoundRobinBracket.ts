@@ -1,5 +1,6 @@
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
+import * as Standings from "~/features/tournament/core/Standings";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -23,6 +24,13 @@ export class RoundRobinBracket extends Bracket {
 		const relevantMatchesFinished =
 			standings.length === this.participantTournamentTeamIds.length;
 
+		if (this.settings?.hasAbDivisions) {
+			return {
+				relevantMatchesFinished,
+				teams: this.teamsFromPlacementsPerAbDivision(standings, placements),
+			};
+		}
+
 		const uniquePlacements = R.unique(standings.map((s) => s.placement));
 
 		// 1,3,5 -> 1,2,3 e.g.
@@ -36,6 +44,30 @@ export class RoundRobinBracket extends Bracket {
 				.filter((s) => placements.includes(placementNormalized(s.placement)))
 				.map((s) => s.team.id),
 		};
+	}
+
+	private teamsFromPlacementsPerAbDivision(
+		standings: Standing[],
+		placements: number[],
+	): number[] {
+		const groupIds = R.unique(
+			standings
+				.map((s) => s.groupId)
+				.filter((id): id is number => typeof id === "number"),
+		);
+		const teams: number[] = [];
+		for (const groupId of groupIds) {
+			for (const division of [0, 1] as const) {
+				const divisionStandings = standings.filter(
+					(s) => s.groupId === groupId && s.team.abDivision === division,
+				);
+				for (const placement of placements) {
+					const standing = divisionStandings[placement - 1];
+					if (standing) teams.push(standing.team.id);
+				}
+			}
+		}
+		return teams;
 	}
 
 	get standings(): Standing[] {
@@ -247,22 +279,8 @@ export class RoundRobinBracket extends Bracket {
 			return 0;
 		});
 
-		let lastPlacement = 0;
-		let currentPlacement = 1;
-		let teamsEncountered = 0;
 		return this.standingsWithoutNonParticipants(
-			sorted.map((team) => {
-				if (team.placement !== lastPlacement) {
-					lastPlacement = team.placement;
-					currentPlacement = teamsEncountered + 1;
-				}
-				teamsEncountered++;
-				return {
-					...team,
-					placement: currentPlacement,
-					stats: team.stats,
-				};
-			}),
+			Standings.reNumberPlacements(sorted),
 		);
 	}
 

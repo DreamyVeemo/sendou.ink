@@ -147,6 +147,10 @@
 		"displayName": "Biggest School in the Sea",
 		"authorDiscordId": "629773997822967819"
 	},
+	"bubblyb": {
+		"displayName": "Bubbly's Birthdays",
+		"authorDiscordId": "752582395076673577"
+	},
 	"bucketmeow12": {
 		"displayName": "Token Of Appreciation",
 		"authorDiscordId": "1170249805373657093"
@@ -334,6 +338,10 @@
 	"dreadnoughtus": {
 		"displayName": "Mesozoic Mayhem: Dreadnoughtus Undefeated",
 		"authorDiscordId": "352207524390240257"
+	},
+	"dreamteam": {
+		"displayName": "Dream Team",
+		"authorDiscordId": "900408802938081350"
 	},
 	"dualin": {
 		"displayName": "Dualin' Horizons",
@@ -858,6 +866,10 @@
 	"oktofest-silver": {
 		"displayName": "Oktofest LAN (Second)",
 		"authorDiscordId": "751912670403362836"
+	},
+	"oocee": {
+		"displayName": "OCE Open Series",
+		"authorDiscordId": "1170249805373657093"
 	},
 	"order1": {
 		"displayName": "ORDR S1",
@@ -1482,6 +1494,10 @@
 	"worldrallychampionship": {
 		"displayName": "WRC #0",
 		"authorDiscordId": "683603297839743009"
+	},
+	"wwarning": {
+		"displayName": "Without Warning",
+		"authorDiscordId": "752582395076673577"
 	},
 	"zekkocup": {
 		"displayName": "Zekko Cup",

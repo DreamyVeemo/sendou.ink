@@ -1,11 +1,16 @@
 import { z } from "zod";
+import { MAX_AP } from "~/features/build-analyzer/analyzer-constants";
 import { ability, modeShort, safeJSONParse } from "~/utils/zod";
-import { MAX_BUILD_FILTERS } from "./builds-constants";
+import {
+	BUILDS_PAGE_BATCH_SIZE,
+	BUILDS_PAGE_MAX_BUILDS,
+	MAX_BUILD_FILTERS,
+} from "./builds-constants";
 
 const abilityFilterSchema = z.object({
 	type: z.literal("ability"),
 	ability: z.string().toUpperCase().pipe(ability),
-	value: z.union([z.number(), z.boolean()]),
+	value: z.union([z.int().min(0).max(MAX_AP), z.boolean()]),
 	comparison: z
 		.string()
 		.toUpperCase()
@@ -20,7 +25,7 @@ const modeFilterSchema = z.object({
 
 const dateFilterSchema = z.object({
 	type: z.literal("date"),
-	date: z.string(),
+	date: z.iso.date(),
 });
 
 export const buildFiltersSearchParams = z.preprocess(
@@ -36,3 +41,10 @@ export const buildFiltersSearchParams = z.preprocess(
 export type BuildFiltersFromSearchParams = NonNullable<
 	z.infer<typeof buildFiltersSearchParams>
 >;
+
+export const buildsLimitSearchParam = z.coerce
+	.number()
+	.int()
+	.positive()
+	.catch(BUILDS_PAGE_BATCH_SIZE)
+	.transform((value) => Math.min(value, BUILDS_PAGE_MAX_BUILDS));
